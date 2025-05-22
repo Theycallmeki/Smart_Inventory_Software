@@ -109,17 +109,18 @@
 
     // Calculate category frequencies
    // Calculate total quantity per category
-function getCategoryFrequencies(items) {
-  const freqMap = {};
-  items.forEach(item => {
-    const cat = item.category || 'Uncategorized';
-    const qty = item.quantity || 0;
-    freqMap[cat] = (freqMap[cat] || 0) + qty;
-  });
-  const categoryNames = Object.keys(freqMap);
-  const frequencies = Object.values(freqMap);
-  return { categoryNames, frequencies };
-}
+// Calculate number of items per category (frequency count)
+        function getCategoryFrequencies(items) {
+        const freqMap = {};
+        items.forEach(item => {
+            const cat = item.category || 'Uncategorized';
+            freqMap[cat] = (freqMap[cat] || 0) + 1;
+        });
+        const categoryNames = Object.keys(freqMap);
+        const frequencies = Object.values(freqMap);
+        return { categoryNames, frequencies };
+        }
+
 
 
     // Render doughnut chart for category frequencies
