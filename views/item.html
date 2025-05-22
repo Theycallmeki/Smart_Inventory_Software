@@ -13,8 +13,9 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f5f5f5;
+            background-image: linear-gradient(to right, #3a8dde, #4facfe, #00f2fe);
             padding: 20px;
+            margin-top: 100px;
         }
 
         .container {
@@ -227,26 +228,6 @@
             opacity: 0.7;
         }
 
-        .quantity-control {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .quantity-btn {
-            width: 30px;
-            height: 30px;
-            border: none;
-            border-radius: 50%;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.2s;
-        }
-
-        .quantity-btn:hover {
-            transform: scale(1.1);
-        }
-
         .plus-btn {
             background: #28a745;
             color: white;
@@ -414,13 +395,7 @@
                 <tr>
                     <td>${item.id}</td>
                     <td>${item.name}</td>
-                    <td>
-                        <div class="quantity-control">
-                            <button class="quantity-btn minus-btn" onclick="changeQuantity(${item.id}, -1)">-</button>
-                            <span>${item.quantity}</span>
-                            <button class="quantity-btn plus-btn" onclick="changeQuantity(${item.id}, 1)">+</button>
-                        </div>
-                    </td>
+                    <td>${item.quantity}</td>
                     <td>${item.category}</td>
                     <td>$${parseFloat(item.price || 0).toFixed(2)}</td>
                     <td>
@@ -528,24 +503,7 @@
         });
 
         // Change quantity
-        async function changeQuantity(id, change) {
-            try {
-                const response = await fetch(`/items/${id}/quantity`, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ change })
-                });
-                
-                if (response.ok) {
-                    loadItems();
-                } else {
-                    throw new Error('Failed to update quantity');
-                }
-            } catch (error) {
-                console.error('Error updating quantity:', error);
-                alert('Error updating quantity. Please try again.');
-            }
-        }
+      
 
         // Delete item
         async function deleteItem(id) {

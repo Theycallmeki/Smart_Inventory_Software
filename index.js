@@ -48,17 +48,18 @@ app.post('/items', async (req, res) => {
   }
 });
 
-// API: Update name/category
+// API: Update name/category/quantity
 app.put('/items/:id', async (req, res) => {
   const { id } = req.params;
-  const { name, category, price } = req.body;  // Added price here
+  const { name, category, price, quantity } = req.body;  // Added quantity here
   try {
     const item = await Item.findByPk(id);
     if (!item) return res.status(404).json({ error: 'Item not found' });
 
     item.name = name || item.name;
     item.category = category || item.category;
-    if (price !== undefined) item.price = price;  // Update price if provided
+    if (price !== undefined) item.price = price;
+    if (quantity !== undefined) item.quantity = quantity;  // Update quantity here
     await item.save();
     res.json(item);
   } catch (err) {
@@ -66,22 +67,6 @@ app.put('/items/:id', async (req, res) => {
   }
 });
 
-// API: Change quantity
-app.patch('/items/:id/quantity', async (req, res) => {
-  const { id } = req.params;
-  const { change } = req.body;
-  try {
-    const item = await Item.findByPk(id);
-    if (!item) return res.status(404).json({ error: 'Item not found' });
-
-    item.quantity += change;
-    if (item.quantity < 0) item.quantity = 0;
-    await item.save();
-    res.json(item);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-});
 
 // API: Delete item
 app.delete('/items/:id', async (req, res) => {
