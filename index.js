@@ -16,13 +16,19 @@ sequelize.sync().then(() => {
   console.log('✅ Database synced.');
 });
 
-// Serve item.html
+// Serve home.html
+
 app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'home.html'));
+}); 
+
+// Serve item.html
+app.get('/item', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'item.html'));
 });
 
 // Serve admin.html
-app.get('/admin.html', (req, res) => {
+app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'admin.html'));
 });
 
