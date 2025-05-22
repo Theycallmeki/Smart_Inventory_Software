@@ -17,10 +17,9 @@ sequelize.sync().then(() => {
 });
 
 // Serve home.html
-
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'home.html'));
-}); 
+});
 
 // Serve item.html
 app.get('/item', (req, res) => {
@@ -40,9 +39,9 @@ app.get('/items', async (req, res) => {
 
 // API: Create item
 app.post('/items', async (req, res) => {
-  const { name, quantity, category } = req.body;
+  const { name, quantity, category, price } = req.body;  // Added price here
   try {
-    const item = await Item.create({ name, quantity, category });
+    const item = await Item.create({ name, quantity, category, price });  // Include price in create
     res.status(201).json(item);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -52,13 +51,14 @@ app.post('/items', async (req, res) => {
 // API: Update name/category
 app.put('/items/:id', async (req, res) => {
   const { id } = req.params;
-  const { name, category } = req.body;
+  const { name, category, price } = req.body;  // Added price here
   try {
     const item = await Item.findByPk(id);
     if (!item) return res.status(404).json({ error: 'Item not found' });
 
     item.name = name || item.name;
     item.category = category || item.category;
+    if (price !== undefined) item.price = price;  // Update price if provided
     await item.save();
     res.json(item);
   } catch (err) {
