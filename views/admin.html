@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin Panel</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 30px;
+      max-width: 900px;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-bottom: 20px;
+    }
+    th, td {
+      border: 1px solid #aaa;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #f4f4f4;
+    }
+    .container {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .table-container {
+      flex: 0 1 auto;
+      width: 55%;
+      margin-right: 20px;
+    }
+    .chart-container {
+      flex: 0 0 auto;
+      width: 40%;
+    }
+    #categoryChart {
+      width: 300px !important;
+      height: 300px !important;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Admin Panel</h1>
+  <h2>Inventory Items</h2>
+
+  <div class="container">
+
+    <!-- Item Data Table -->
+    <div class="table-container">
+      <table id="itemsTable">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Quantity</th>
+            <th>Category</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- JS will fill this -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Category Frequency Chart -->
+    <div class="chart-container">
+      <h2>Category Frequency Chart</h2>
+      <canvas id="categoryChart"></canvas>
+    </div>
+
+  </div>
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script>
+    // Fetch all items from backend API
+    async function fetchItems() {
+      try {
+        const res = await fetch('/items');
+        if (!res.ok) throw new Error('Failed to fetch items');
+        return await res.json();
+      } catch (err) {
+        console.error(err);
+        return [];
+      }
+    }
+
+    // Render items table rows
+    function renderTable(items) {
+      const tbody = document.querySelector('#itemsTable tbody');
+      tbody.innerHTML = ''; // Clear existing rows
+      items.forEach(item => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${item.id}</td>
+          <td>${item.name}</td>
+          <td>${item.quantity}</td>
+          <td>${item.category || 'Uncategorized'}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Calculate category frequencies
+   // Calculate total quantity per category
+function getCategoryFrequencies(items) {
+  const freqMap = {};
+  items.forEach(item => {
+    const cat = item.category || 'Uncategorized';
+    const qty = item.quantity || 0;
+    freqMap[cat] = (freqMap[cat] || 0) + qty;
+  });
+  const categoryNames = Object.keys(freqMap);
+  const frequencies = Object.values(freqMap);
+  return { categoryNames, frequencies };
+}
+
+
+    // Render doughnut chart for category frequencies
+    function renderChart(categories, frequencies) {
+      const ctx = document.getElementById('categoryChart').getContext('2d');
+
+      const total = frequencies.reduce((a, b) => a + b, 0);
+      const percentages = frequencies.map(f => ((f / total) * 100).toFixed(2));
+
+      new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: categories,
+          datasets: [{
+            label: 'Category Frequency',
+            data: frequencies,
+            backgroundColor: [
+              'rgba(75, 192, 192, 0.6)',
+              'rgba(153, 102, 255, 0.6)',
+              'rgba(255, 159, 64, 0.6)',
+              'rgba(255, 99, 132, 0.6)',
+              'rgba(54, 162, 235, 0.6)',
+              'rgba(255, 205, 86, 0.6)',
+              'rgba(201, 203, 207, 0.6)'
+            ],
+            borderColor: [
+              'rgba(75, 192, 192, 1)',
+              'rgba(153, 102, 255, 1)',
+              'rgba(255, 159, 64, 1)',
+              'rgba(255, 99, 132, 1)',
+              'rgba(54, 162, 235, 1)',
+              'rgba(255, 205, 86, 1)',
+              'rgba(201, 203, 207, 1)'
+            ],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: ctx => {
+                  const label = ctx.label || '';
+                  const count = ctx.raw || 0;
+                  const pct = percentages[ctx.dataIndex];
+                  return `${label}: ${count} (${pct}%)`;
+                }
+              }
+            },
+            legend: {
+              position: 'top',
+            }
+          }
+        }
+      });
+    }
+
+    // Main
+    async function init() {
+      const items = await fetchItems();
+      renderTable(items);
+      const { categoryNames, frequencies } = getCategoryFrequencies(items);
+      renderChart(categoryNames, frequencies);
+    }
+
+    init();
+  </script>
+
+</body>
+</html>

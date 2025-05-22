@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Inventory Manager</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 30px;
+      max-width: 900px;
+    }
+    input, button {
+      padding: 6px 10px;
+      margin: 5px;
+      font-size: 1rem;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #aaa;
+      padding: 10px;
+      text-align: left;
+    }
+    th {
+      background-color: #f4f4f4;
+    }
+    .btn {
+      cursor: pointer;
+      padding: 6px 10px;
+      margin: 0 3px;
+      border: none;
+      border-radius: 4px;
+      color: white;
+    }
+    .btn-edit {
+      background-color: #3498db;
+    }
+    .btn-delete {
+      background-color: #e74c3c;
+    }
+    .btn-save {
+      background-color: #2ecc71;
+    }
+    .btn-cancel {
+      background-color: #95a5a6;
+    }
+    #addForm input {
+      width: 150px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Inventory Manager</h1>
+
+  <input type="text" id="searchInput" placeholder="Search by name or category" />
+
+  <table id="itemsTable">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Quantity</th>
+        <th>Category</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Items will be inserted here -->
+    </tbody>
+  </table>
+
+  <h2>Add New Item</h2>
+  <form id="addForm">
+    <input type="text" id="addName" placeholder="Name" required />
+    <input type="number" id="addQuantity" placeholder="Quantity" min="0" value="0" required />
+    <input type="text" id="addCategory" placeholder="Category" required />
+    <button type="submit">Add Item</button>
+  </form>
+
+<script>
+  const API_URL = '/items';
+
+  const itemsTableBody = document.querySelector('#itemsTable tbody');
+  const searchInput = document.getElementById('searchInput');
+  const addForm = document.getElementById('addForm');
+  const addName = document.getElementById('addName');
+  const addQuantity = document.getElementById('addQuantity');
+  const addCategory = document.getElementById('addCategory');
+
+  let items = [];
+
+  // Fetch all items and render
+  async function fetchItems() {
+    try {
+      const res = await fetch(API_URL);
+      items = await res.json();
+      renderTable(items);
+    } catch (err) {
+      alert('Failed to fetch items');
+      console.error(err);
+    }
+  }
+
+  // Render table rows from items
+  function renderTable(itemsToRender) {
+    itemsTableBody.innerHTML = '';
+    itemsToRender.forEach(item => {
+      const tr = document.createElement('tr');
+
+      tr.innerHTML = `
+        <td>${item.id}</td>
+        <td class="name">${escapeHtml(item.name)}</td>
+        <td class="quantity">${item.quantity}</td>
+        <td class="category">${escapeHtml(item.category)}</td>
+        <td>
+          <button class="btn btn-edit">Edit</button>
+          <button class="btn btn-delete">Delete</button>
+        </td>
+      `;
+
+      // Edit button logic
+      tr.querySelector('.btn-edit').addEventListener('click', () => {
+        startEditing(tr, item);
+      });
+
+      // Delete button logic
+      tr.querySelector('.btn-delete').addEventListener('click', () => {
+        if (confirm(`Delete item "${item.name}"?`)) {
+          deleteItem(item.id);
+        }
+      });
+
+      itemsTableBody.appendChild(tr);
+    });
+  }
+
+  // Start editing a row (name, quantity, and category)
+  function startEditing(tr, item) {
+    tr.innerHTML = `
+      <td>${item.id}</td>
+      <td><input type="text" class="edit-name" value="${escapeHtml(item.name)}" /></td>
+      <td><input type="number" class="edit-quantity" value="${item.quantity}" min="0" /></td>
+      <td><input type="text" class="edit-category" value="${escapeHtml(item.category)}" /></td>
+      <td>
+        <button class="btn btn-save">Save</button>
+        <button class="btn btn-cancel">Cancel</button>
+      </td>
+    `;
+
+    const btnSave = tr.querySelector('.btn-save');
+    const btnCancel = tr.querySelector('.btn-cancel');
+
+    btnSave.addEventListener('click', async () => {
+      const newName = tr.querySelector('.edit-name').value.trim();
+      const newQuantity = parseInt(tr.querySelector('.edit-quantity').value);
+      const newCategory = tr.querySelector('.edit-category').value.trim();
+
+      if (!newName) {
+        alert('Name cannot be empty.');
+        return;
+      }
+      if (isNaN(newQuantity) || newQuantity < 0) {
+        alert('Quantity must be a non-negative number.');
+        return;
+      }
+      if (!newCategory) {
+        alert('Category cannot be empty.');
+        return;
+      }
+
+      try {
+        // Update name and category via PUT
+        await fetch(`${API_URL}/${item.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: newName, category: newCategory }),
+        });
+
+        // Update quantity via PATCH
+        const change = newQuantity - item.quantity;
+        if (change !== 0) {
+          await fetch(`${API_URL}/${item.id}/quantity`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ change }),
+          });
+        }
+
+        await fetchItems();
+      } catch (err) {
+        alert('Failed to update item.');
+        console.error(err);
+      }
+    });
+
+    btnCancel.addEventListener('click', () => {
+      renderTable(items);
+    });
+  }
+
+  // Delete item
+  async function deleteItem(id) {
+    try {
+      await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+      await fetchItems();
+    } catch (err) {
+      alert('Failed to delete item.');
+      console.error(err);
+    }
+  }
+
+  // Add new item
+  addForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const name = addName.value.trim();
+    const quantity = parseInt(addQuantity.value);
+    const category = addCategory.value.trim();
+
+    if (!name || !category || isNaN(quantity) || quantity < 0) {
+      alert('Please enter valid values for all fields.');
+      return;
+    }
+
+    try {
+      await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, quantity, category }),
+      });
+
+      addName.value = '';
+      addQuantity.value = '0';
+      addCategory.value = '';
+      fetchItems();
+    } catch (err) {
+      alert('Failed to add item.');
+      console.error(err);
+    }
+  });
+
+  // Search filter
+  searchInput.addEventListener('input', () => {
+    const query = searchInput.value.toLowerCase();
+    const filtered = items.filter(
+      item =>
+        item.name.toLowerCase().includes(query) ||
+        item.category.toLowerCase().includes(query)
+    );
+    renderTable(filtered);
+  });
+
+  // Escape HTML to prevent injection
+  function escapeHtml(text) {
+    return text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  // Initial load
+  fetchItems();
+</script>
+
+</body>
+</html>
