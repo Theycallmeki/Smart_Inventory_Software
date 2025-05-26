@@ -3,6 +3,7 @@ const bodyParser = require('body-parser');
 const path = require('path');
 const sequelize = require('./db');
 const Item = require('./models/item');
+const SalesHistory = require('./models/salesHistory');
 
 const app = express();
 const PORT = 3005;
@@ -31,27 +32,36 @@ app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'admin.html'));
 });
 
+// Serve salesHistory.html page
+app.get('/sales-history', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'salesHistory.html'));
+});
+
 // API: Get all items
 app.get('/items', async (req, res) => {
-  const items = await Item.findAll();
-  res.json(items);
+  try {
+    const items = await Item.findAll();
+    res.json(items);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // API: Create item
 app.post('/items', async (req, res) => {
-  const { name, quantity, category, price } = req.body;  // Added price here
+  const { name, quantity, category, price } = req.body;
   try {
-    const item = await Item.create({ name, quantity, category, price });  // Include price in create
+    const item = await Item.create({ name, quantity, category, price });
     res.status(201).json(item);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 });
 
-// API: Update name/category/quantity
+// API: Update name/category/price/quantity
 app.put('/items/:id', async (req, res) => {
   const { id } = req.params;
-  const { name, category, price, quantity } = req.body;  // Added quantity here
+  const { name, category, price, quantity } = req.body;
   try {
     const item = await Item.findByPk(id);
     if (!item) return res.status(404).json({ error: 'Item not found' });
@@ -59,14 +69,14 @@ app.put('/items/:id', async (req, res) => {
     item.name = name || item.name;
     item.category = category || item.category;
     if (price !== undefined) item.price = price;
-    if (quantity !== undefined) item.quantity = quantity;  // Update quantity here
+    if (quantity !== undefined) item.quantity = quantity;
     await item.save();
+
     res.json(item);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 });
-
 
 // API: Delete item
 app.delete('/items/:id', async (req, res) => {
@@ -82,15 +92,7 @@ app.delete('/items/:id', async (req, res) => {
   }
 });
 
-const SalesHistory = require('./models/salesHistory'); // add this at top with other requires
-
-// Serve salesHistory.html page
-// Serve the sales history HTML page
-app.get('/sales-history', (req, res) => {
-  res.sendFile(path.join(__dirname, 'views', 'salesHistory.html'));
-});
-
-// API: Get all sales history records with associated Item data
+// API: Get all sales history with associated Item data
 app.get('/api/sales-history', async (req, res) => {
   try {
     const sales = await SalesHistory.findAll({
@@ -102,17 +104,30 @@ app.get('/api/sales-history', async (req, res) => {
   }
 });
 
-// API: Create a new sales history record
+// API: Create a new sales history record and update item quantity
 app.post('/api/sales-history', async (req, res) => {
   const { itemId, date, quantitySold } = req.body;
+
   try {
+    const item = await Item.findByPk(itemId);
+    if (!item) return res.status(404).json({ error: 'Item not found' });
+
+    if (item.quantity < quantitySold) {
+      return res.status(400).json({ error: 'Insufficient stock' });
+    }
+
+    // Create the sales history record
     const sale = await SalesHistory.create({ itemId, date, quantitySold });
-    res.status(201).json(sale);
+
+    // Decrease the item quantity
+    item.quantity -= quantitySold;
+    await item.save();
+
+    res.status(201).json({ sale, item });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(500).json({ error: err.message });
   }
 });
-
 
 // Start server
 app.listen(PORT, () => {
