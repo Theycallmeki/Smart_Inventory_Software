@@ -3,10 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Sales Prediction</title>
+  <title>Sales Prediction with Accuracy</title>
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/brain.js"></script>
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; }
     .chart-container { max-width: 700px; margin-bottom: 30px; }
@@ -14,7 +13,7 @@
   </style>
 </head>
 <body>
-  <h1>Sales Prediction</h1>
+  <h1>Sales Prediction with Accuracy</h1>
 
   <label for="itemSelect">Select Item:</label>
   <select id="itemSelect"></select>
@@ -23,7 +22,7 @@
     <canvas id="salesChart"></canvas>
   </div>
 
-  <div class="prediction-box">
+  <div class="prediction-box" id="predictionBox">
     <strong>Predicted Sales Next Month:</strong> <span id="predictionValue">Loading...</span>
   </div>
 
@@ -32,14 +31,14 @@
     const predictionValue = document.getElementById('predictionValue');
     let salesChart;
 
-    // Helper to format year-month to "Mon YYYY"
+    // Helper to format year-month like "Apr 2025"
     function formatYearMonth(yearMonth) {
       const [year, month] = yearMonth.split('-').map(Number);
       const date = new Date(year, month - 1);
       return date.toLocaleString('default', { month: 'short', year: 'numeric' });
     }
 
-    // Helper to add months to a date string "YYYY-MM"
+    // Helper to add one month to "YYYY-MM" string
     function addMonth(yearMonth) {
       let [year, month] = yearMonth.split('-').map(Number);
       month += 1;
@@ -77,7 +76,7 @@
       const quantities = yearMonths.map(ym => salesByYearMonth[ym]);
 
       updateChart(yearMonths, quantities);
-      predictNextMonth(yearMonths, quantities);
+      predictAndCalculateAccuracy(yearMonths, quantities);
     }
 
     function updateChart(yearMonths, data) {
@@ -116,14 +115,14 @@
       });
     }
 
-    function predictNextMonth(yearMonths, data) {
-      if (yearMonths.length < 2) {
-        predictionValue.textContent = 'Not enough data';
+    // Predict next month sales and calculate accuracy on last known month using linear regression
+    function predictAndCalculateAccuracy(yearMonths, data) {
+      if (yearMonths.length < 3) {  // Need at least 3 data points
+        predictionValue.textContent = 'Not enough data for accuracy';
         return;
       }
 
-      // Convert yearMonths to numeric index for NN
-      // Use month index relative to first date for scaling
+      // Convert yearMonths to numeric index relative to first date
       const firstYearMonth = yearMonths[0];
       function ymToIndex(ym) {
         const [y, m] = ym.split('-').map(Number);
@@ -131,33 +130,44 @@
         return (y - fy) * 12 + (m - fm);
       }
 
-      const indices = yearMonths.map(ymToIndex);
-      const maxIndex = Math.max(...indices);
-      const maxQuantity = Math.max(...data);
+      // Use all except last point to train
+      const trainX = yearMonths.slice(0, -1).map(ymToIndex);
+      const trainY = data.slice(0, -1);
 
-      // Normalize inputs and outputs
-      const trainingData = indices.map((idx, i) => ({
-        input: [idx / maxIndex],
-        output: [data[i] / maxQuantity]
-      }));
+      // Calculate linear regression slope and intercept
+      const n = trainX.length;
+      const sumX = trainX.reduce((a,b) => a + b, 0);
+      const sumY = trainY.reduce((a,b) => a + b, 0);
+      const sumXY = trainX.reduce((acc, val, i) => acc + val * trainY[i], 0);
+      const sumX2 = trainX.reduce((acc, val) => acc + val * val, 0);
 
-      const net = new brain.NeuralNetwork();
-      net.train(trainingData, { log: false });
+      const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+      const intercept = (sumY - slope * sumX) / n;
 
-      const nextIndex = maxIndex + 1;
-      const predictedNormalized = net.run([nextIndex / maxIndex]);
-      const predicted = predictedNormalized[0] * maxQuantity;
+      // Predict last known month sales
+      const lastIndex = ymToIndex(yearMonths[yearMonths.length - 1]);
+      const predictedLast = slope * lastIndex + intercept;
+      const actualLast = data[data.length - 1];
 
-      // Calculate next year-month string
+      // Calculate accuracy in percentage
+      const errorPercent = Math.abs(predictedLast - actualLast) / actualLast * 100;
+      const accuracyPercent = 100 - errorPercent;
+
+      // Predict next month sales
+      const nextIndex = lastIndex + 1;
+      const predictedNext = slope * nextIndex + intercept;
       const nextYearMonth = addMonth(yearMonths[yearMonths.length - 1]);
 
-      predictionValue.textContent = `${Math.round(predicted)} (for ${formatYearMonth(nextYearMonth)})`;
+      predictionValue.innerHTML =
+        `Next month (${formatYearMonth(nextYearMonth)}): <strong>${Math.round(predictedNext)}</strong><br>` +
+        `Prediction Accuracy for last month: <strong>${accuracyPercent.toFixed(2)}%</strong> (based on backtest)`;
     }
 
     itemSelect.addEventListener('change', () => {
       if (itemSelect.value) fetchSales(itemSelect.value);
     });
 
+    // Initialize
     fetchItems().then(() => {
       if (itemSelect.options.length) {
         itemSelect.value = itemSelect.options[0].value;
