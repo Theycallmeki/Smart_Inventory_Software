@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sales Prediction</title>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/brain.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .chart-container { max-width: 700px; margin-bottom: 30px; }
+    .prediction-box { padding: 10px; border: 1px solid #ccc; background: #f8f8f8; width: fit-content; margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+  <h1>Sales Prediction</h1>
+
+  <label for="itemSelect">Select Item:</label>
+  <select id="itemSelect"></select>
+
+  <div class="chart-container">
+    <canvas id="salesChart"></canvas>
+  </div>
+
+  <div class="prediction-box">
+    <strong>Predicted Sales Next Month:</strong> <span id="predictionValue">Loading...</span>
+  </div>
+
+  <script>
+    const itemSelect = document.getElementById('itemSelect');
+    const predictionValue = document.getElementById('predictionValue');
+    let salesChart;
+
+    // Helper to format year-month to "Mon YYYY"
+    function formatYearMonth(yearMonth) {
+      const [year, month] = yearMonth.split('-').map(Number);
+      const date = new Date(year, month - 1);
+      return date.toLocaleString('default', { month: 'short', year: 'numeric' });
+    }
+
+    // Helper to add months to a date string "YYYY-MM"
+    function addMonth(yearMonth) {
+      let [year, month] = yearMonth.split('-').map(Number);
+      month += 1;
+      if (month > 12) {
+        month = 1;
+        year += 1;
+      }
+      return `${year}-${month.toString().padStart(2, '0')}`;
+    }
+
+    async function fetchItems() {
+      const res = await axios.get('/items');
+      res.data.forEach(item => {
+        const opt = document.createElement('option');
+        opt.value = item.id;
+        opt.textContent = item.name;
+        itemSelect.appendChild(opt);
+      });
+    }
+
+    async function fetchSales(itemId) {
+      const res = await axios.get('/api/sales-history');
+      const itemSales = res.data.filter(s => s.itemId === +itemId);
+
+      // Group sales by year-month
+      const salesByYearMonth = {};
+      itemSales.forEach(s => {
+        const d = new Date(s.date);
+        const ym = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`;
+        salesByYearMonth[ym] = (salesByYearMonth[ym] || 0) + s.quantitySold;
+      });
+
+      // Sort year-month keys
+      const yearMonths = Object.keys(salesByYearMonth).sort();
+      const quantities = yearMonths.map(ym => salesByYearMonth[ym]);
+
+      updateChart(yearMonths, quantities);
+      predictNextMonth(yearMonths, quantities);
+    }
+
+    function updateChart(yearMonths, data) {
+      const ctx = document.getElementById('salesChart').getContext('2d');
+      if (salesChart) salesChart.destroy();
+      salesChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: yearMonths.map(formatYearMonth),
+          datasets: [{
+            data: data.map(Math.round),
+            borderColor: 'blue',
+            fill: false,
+            pointRadius: 6,
+            pointHoverRadius: 8,
+            pointBackgroundColor: 'blue',
+          }]
+        },
+        options: {
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { precision: 0 }
+            }
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              enabled: true,
+              callbacks: {
+                label: ctx => `Quantity Sold: ${ctx.parsed.y}`
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function predictNextMonth(yearMonths, data) {
+      if (yearMonths.length < 2) {
+        predictionValue.textContent = 'Not enough data';
+        return;
+      }
+
+      // Convert yearMonths to numeric index for NN
+      // Use month index relative to first date for scaling
+      const firstYearMonth = yearMonths[0];
+      function ymToIndex(ym) {
+        const [y, m] = ym.split('-').map(Number);
+        const [fy, fm] = firstYearMonth.split('-').map(Number);
+        return (y - fy) * 12 + (m - fm);
+      }
+
+      const indices = yearMonths.map(ymToIndex);
+      const maxIndex = Math.max(...indices);
+      const maxQuantity = Math.max(...data);
+
+      // Normalize inputs and outputs
+      const trainingData = indices.map((idx, i) => ({
+        input: [idx / maxIndex],
+        output: [data[i] / maxQuantity]
+      }));
+
+      const net = new brain.NeuralNetwork();
+      net.train(trainingData, { log: false });
+
+      const nextIndex = maxIndex + 1;
+      const predictedNormalized = net.run([nextIndex / maxIndex]);
+      const predicted = predictedNormalized[0] * maxQuantity;
+
+      // Calculate next year-month string
+      const nextYearMonth = addMonth(yearMonths[yearMonths.length - 1]);
+
+      predictionValue.textContent = `${Math.round(predicted)} (for ${formatYearMonth(nextYearMonth)})`;
+    }
+
+    itemSelect.addEventListener('change', () => {
+      if (itemSelect.value) fetchSales(itemSelect.value);
+    });
+
+    fetchItems().then(() => {
+      if (itemSelect.options.length) {
+        itemSelect.value = itemSelect.options[0].value;
+        fetchSales(itemSelect.value);
+      }
+    });
+  </script>
+</body>
+</html>

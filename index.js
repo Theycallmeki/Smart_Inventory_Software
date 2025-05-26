@@ -1,4 +1,4 @@
-const express = require('express');
+const express = require('express'); 
 const bodyParser = require('body-parser');
 const path = require('path');
 const sequelize = require('./db');
@@ -35,6 +35,11 @@ app.get('/admin', (req, res) => {
 // Serve salesHistory.html page
 app.get('/sales-history', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'salesHistory.html'));
+});
+
+// Serve prediction.html page
+app.get('/prediction', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'prediction.html'));
 });
 
 // API: Get all items
