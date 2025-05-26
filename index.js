@@ -2,7 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
 const sequelize = require('./db');
-const Item = require('./model');
+const Item = require('./models/item');
 
 const app = express();
 const PORT = 3005;
@@ -81,6 +81,38 @@ app.delete('/items/:id', async (req, res) => {
     res.status(400).json({ error: err.message });
   }
 });
+
+const SalesHistory = require('./models/salesHistory'); // add this at top with other requires
+
+// Serve salesHistory.html page
+// Serve the sales history HTML page
+app.get('/sales-history', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'salesHistory.html'));
+});
+
+// API: Get all sales history records with associated Item data
+app.get('/api/sales-history', async (req, res) => {
+  try {
+    const sales = await SalesHistory.findAll({
+      include: [{ model: Item }]
+    });
+    res.json(sales);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// API: Create a new sales history record
+app.post('/api/sales-history', async (req, res) => {
+  const { itemId, date, quantitySold } = req.body;
+  try {
+    const sale = await SalesHistory.create({ itemId, date, quantitySold });
+    res.status(201).json(sale);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
 
 // Start server
 app.listen(PORT, () => {

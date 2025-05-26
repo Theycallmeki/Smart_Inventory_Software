@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sales History</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background-color: #f2f2f2; }
+    form > * { margin: 5px 0; display: block; }
+    label { font-weight: bold; }
+    input, select { padding: 5px; width: 200px; }
+    button { padding: 8px 15px; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h1>Sales History</h1>
+
+  <form id="addSaleForm">
+    <label for="itemId">Item:</label>
+    <select id="itemId" name="itemId" required></select>
+
+    <label for="date">Date:</label>
+    <input type="date" id="date" name="date" required />
+
+    <label for="quantitySold">Quantity Sold:</label>
+    <input type="number" id="quantitySold" name="quantitySold" min="1" required />
+
+    <button type="submit">Add Sale Record</button>
+  </form>
+
+  <table id="salesTable">
+    <thead>
+      <tr>
+        <th>Item Name</th>
+        <th>Category</th>
+        <th>Price</th>
+        <th>Date</th>
+        <th>Quantity Sold</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    async function fetchItems() {
+      const res = await fetch('/items');
+      const items = await res.json();
+      const select = document.getElementById('itemId');
+      select.innerHTML = '';
+      items.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item.id;
+        option.textContent = `${item.name} (${item.category})`;
+        select.appendChild(option);
+      });
+    }
+
+    async function fetchSalesHistory() {
+      const res = await fetch('/api/sales-history');
+      const sales = await res.json();
+      const tbody = document.querySelector('#salesTable tbody');
+      tbody.innerHTML = '';
+      sales.forEach(sale => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${sale.Item.name}</td>
+          <td>${sale.Item.category}</td>
+          <td>${sale.Item.price}</td>
+          <td>${sale.date}</td>
+          <td>${sale.quantitySold}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    document.getElementById('addSaleForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const itemId = document.getElementById('itemId').value;
+      const date = document.getElementById('date').value;
+      const quantitySold = document.getElementById('quantitySold').value;
+
+      const res = await fetch('/api/sales-history', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ itemId, date, quantitySold }),
+      });
+
+      if (res.ok) {
+        alert('Sale record added!');
+        fetchSalesHistory();
+        e.target.reset();
+      } else {
+        const error = await res.json();
+        alert('Error: ' + error.error);
+      }
+    });
+
+    fetchItems();
+    fetchSalesHistory();
+  </script>
+</body>
+</html>
