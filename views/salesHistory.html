@@ -3,37 +3,56 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Sales History</title>
+  <title>Sales History without Transaction ID</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; }
     table { border-collapse: collapse; width: 100%; margin-top: 20px; }
     th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
     th { background-color: #f2f2f2; }
-    form > * { margin: 5px 0; display: block; }
     label { font-weight: bold; }
-    input, select { padding: 5px; width: 200px; }
+    select, input[type="number"], input[type="text"] {
+      padding: 5px; width: 200px; margin-right: 10px;
+    }
     button { padding: 8px 15px; margin-top: 10px; }
+    #cartTable { margin-top: 10px; width: 100%; }
+    #cartTable th, #cartTable td { border: 1px solid #ddd; padding: 6px; text-align: center; }
+    .remove-btn { cursor: pointer; color: red; }
   </style>
 </head>
 <body>
-  <h1>Sales History</h1>
+  <h1>Sales History without Transaction ID</h1>
 
-  <form id="addSaleForm">
+  <form id="transactionForm">
+    <!-- Transaction ID input removed -->
+
+    <h3>Add Items to Transaction</h3>
     <label for="itemId">Item:</label>
     <select id="itemId" name="itemId" required></select>
-
-    <label for="date">Date:</label>
-    <input type="date" id="date" name="date" required />
 
     <label for="quantitySold">Quantity Sold:</label>
     <input type="number" id="quantitySold" name="quantitySold" min="1" required />
 
-    <button type="submit">Add Sale Record</button>
+    <button type="button" id="addToCartBtn">Add to Cart</button>
+
+    <table id="cartTable">
+      <thead>
+        <tr>
+          <th>Item Name</th>
+          <th>Quantity</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <button type="submit" style="margin-top:15px;">Submit Transaction</button>
   </form>
 
+  <h2>Sales History</h2>
   <table id="salesTable">
     <thead>
       <tr>
+        <!-- Removed Transaction ID column -->
         <th>Item Name</th>
         <th>Category</th>
         <th>Price</th>
@@ -44,62 +63,146 @@
     <tbody></tbody>
   </table>
 
-  <script>
-    async function fetchItems() {
-      const res = await fetch('/items');
-      const items = await res.json();
-      const select = document.getElementById('itemId');
-      select.innerHTML = '';
-      items.forEach(item => {
-        const option = document.createElement('option');
-        option.value = item.id;
-        option.textContent = `${item.name} (${item.category})`;
-        select.appendChild(option);
-      });
+<script>
+  let itemsList = [];
+  let cart = [];
+
+  async function fetchItems() {
+    const res = await fetch('/items');
+    itemsList = await res.json();
+    const select = document.getElementById('itemId');
+    select.innerHTML = '';
+    itemsList.forEach(item => {
+      const option = document.createElement('option');
+      option.value = item.id;
+      option.textContent = `${item.name} (${item.category}) - Stock: ${item.quantity}`;
+      select.appendChild(option);
+    });
+  }
+
+  function addToCart() {
+    const itemId = parseInt(document.getElementById('itemId').value);
+    const quantitySold = parseInt(document.getElementById('quantitySold').value);
+    if (!itemId || !quantitySold || quantitySold < 1) {
+      alert('Please select a valid item and quantity.');
+      return;
     }
 
-    async function fetchSalesHistory() {
-      const res = await fetch('/api/sales-history');
-      const sales = await res.json();
-      const tbody = document.querySelector('#salesTable tbody');
-      tbody.innerHTML = '';
-      sales.forEach(sale => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
+    const item = itemsList.find(i => i.id === itemId);
+    if (!item) {
+      alert('Invalid item selected.');
+      return;
+    }
+
+    if (quantitySold > item.quantity) {
+      alert(`Cannot add ${quantitySold} units. Only ${item.quantity} in stock.`);
+      return;
+    }
+
+    const cartItem = cart.find(c => c.itemId === itemId);
+    if (cartItem) {
+      if (cartItem.quantitySold + quantitySold > item.quantity) {
+        alert(`Total quantity for this item in cart exceeds stock.`);
+        return;
+      }
+      cartItem.quantitySold += quantitySold;
+    } else {
+      cart.push({ itemId, itemName: item.name, quantitySold });
+    }
+
+    renderCart();
+  }
+
+  function renderCart() {
+    const tbody = document.querySelector('#cartTable tbody');
+    tbody.innerHTML = '';
+    cart.forEach((cartItem, index) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${cartItem.itemName}</td>
+        <td>${cartItem.quantitySold}</td>
+        <td><span class="remove-btn" data-index="${index}">Remove</span></td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    document.querySelectorAll('.remove-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const index = e.target.getAttribute('data-index');
+        cart.splice(index, 1);
+        renderCart();
+      });
+    });
+  }
+
+  async function fetchSalesHistory() {
+    const res = await fetch('/api/sales-history');
+    const sales = await res.json();
+    const tbody = document.querySelector('#salesTable tbody');
+    tbody.innerHTML = '';
+
+    // No transactionId in table, so no sorting on transactionId
+    sales.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    sales.forEach(sale => {
+      tbody.innerHTML += `
+        <tr>
           <td>${sale.Item.name}</td>
           <td>${sale.Item.category}</td>
           <td>${sale.Item.price}</td>
           <td>${sale.date}</td>
           <td>${sale.quantitySold}</td>
-        `;
-        tbody.appendChild(tr);
-      });
+        </tr>
+      `;
+    });
+  }
+
+  async function submitTransaction(e) {
+    e.preventDefault();
+
+    if (cart.length === 0) {
+      alert('Add at least one item to the transaction.');
+      return;
     }
 
-    document.getElementById('addSaleForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const itemId = document.getElementById('itemId').value;
-      const date = document.getElementById('date').value;
-      const quantitySold = document.getElementById('quantitySold').value;
+    const transactionId = 'TX' + Date.now();
+    const today = new Date();
+    const date = today.toISOString().split('T')[0];
 
+    for (const cartItem of cart) {
       const res = await fetch('/api/sales-history', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ itemId, date, quantitySold }),
+        body: JSON.stringify({
+          itemId: cartItem.itemId,
+          date,
+          quantitySold: cartItem.quantitySold,
+          transactionId
+        })
       });
 
-      if (res.ok) {
-        alert('Sale record added!');
-        fetchSalesHistory();
-        e.target.reset();
-      } else {
+      if (!res.ok) {
         const error = await res.json();
-        alert('Error: ' + error.error);
+        alert('Error adding sale: ' + error.error);
+        return;
       }
-    });
+    }
+
+    alert('Transaction recorded successfully!');
+
+    cart = [];
+    renderCart();
+    document.getElementById('transactionForm').reset();
 
     fetchItems();
     fetchSalesHistory();
-  </script>
+  }
+
+  document.getElementById('addToCartBtn').addEventListener('click', addToCart);
+  document.getElementById('transactionForm').addEventListener('submit', submitTransaction);
+
+  fetchItems();
+  fetchSalesHistory();
+</script>
 </body>
 </html>

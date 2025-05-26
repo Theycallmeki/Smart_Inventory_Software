@@ -20,6 +20,8 @@ const SalesHistory = sequelize.define('SalesHistory', {
   date: {
     type: DataTypes.DATEONLY,
     allowNull: false,
+    defaultValue: DataTypes.NOW,  // <-- set default to current date
+
   },
   quantitySold: {
     type: DataTypes.INTEGER,
