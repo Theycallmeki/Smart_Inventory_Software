@@ -7,38 +7,166 @@
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    .chart-container { max-width: 700px; margin-bottom: 30px; }
-    .prediction-box { padding: 10px; border: 1px solid #ccc; background: #f8f8f8; width: fit-content; margin-bottom: 10px; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #6b73ff 0%, #000dff 100%);
+      color: #fff;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding: 40px 20px;
+      text-align: center;
+    }
+
+    .container {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 30px 40px 40px 40px;
+      border-radius: 15px;
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+      backdrop-filter: blur(8.5px);
+      -webkit-backdrop-filter: blur(8.5px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      max-width: 700px;
+      width: 100%;
+      text-align: left;
+    }
+
+    h1 {
+      margin-bottom: 30px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      font-size: 1.8rem;
+      text-align: center;
+    }
+
+    /* Container for each label+select/input combo */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 20px;
+      color: #fff;
+    }
+
+    label {
+      margin-bottom: 6px;
+      font-weight: 600;
+      font-size: 1rem;
+    }
+
+    select {
+      padding: 8px 12px;
+      font-size: 1rem;
+      border-radius: 8px;
+      border: none;
+      outline: none;
+      cursor: pointer;
+      font-weight: 600;
+      color: #000dff;
+      background-color: #fff;
+      box-shadow: 0 4px 10px rgba(0, 13, 255, 0.3);
+      transition: box-shadow 0.3s ease;
+    }
+
+    select:hover,
+    select:focus {
+      box-shadow: 0 6px 15px rgba(0, 13, 255, 0.5);
+    }
+
+    input#itemSearch {
+      padding: 8px 12px;
+      font-size: 1rem;
+      border-radius: 8px;
+      border: none;
+      outline: none;
+      font-weight: 600;
+      color: #000dff;
+      background-color: #fff;
+      box-shadow: 0 4px 10px rgba(0, 13, 255, 0.3);
+      transition: box-shadow 0.3s ease;
+    }
+
+    input#itemSearch::placeholder {
+      color: #000dff99;
+      font-weight: 400;
+    }
+
+    input#itemSearch:hover,
+    input#itemSearch:focus {
+      box-shadow: 0 6px 15px rgba(0, 13, 255, 0.5);
+    }
+
+    .chart-container {
+      margin: 30px 0;
+    }
+
+    .prediction-box {
+      padding: 15px 20px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.15);
+      font-weight: 600;
+      font-size: 1.1rem;
+      box-shadow: 0 6px 15px rgba(0, 13, 255, 0.3);
+      color: #fff;
+      min-height: 60px;
+      user-select: none;
+      text-align: center;
+    }
+
+    #salesChart {
+      background-color: rgba(255, 255, 255, 0.85);
+      border-radius: 15px;
+      padding: 20px;
+    }
   </style>
 </head>
 <body>
-  <h1>Sales Prediction /linear regression basis</h1>
+  <div class="container">
+    <h1>Sales Prediction / Linear Regression Basis</h1>
 
-  <label for="itemSelect">Select Item:</label>
-  <select id="itemSelect"></select>
+    <div class="form-group">
+      <label for="itemSearch">Search Item:</label>
+      <input type="text" id="itemSearch" placeholder="Type to search..." />
+    </div>
 
-  <div class="chart-container">
-    <canvas id="salesChart"></canvas>
-  </div>
+    <div class="form-group">
+      <label for="itemSelect">Select Item:</label>
+      <select id="itemSelect"></select>
+    </div>
 
-  <div class="prediction-box" id="predictionBox">
-    <strong>Predicted Sales Next Month:</strong> <span id="predictionValue">Loading...</span>
+    <div class="form-group">
+      <label for="yearSelect">Select Year:</label>
+      <select id="yearSelect">
+        <option value="all">All Years</option>
+      </select>
+    </div>
+
+    <div class="chart-container">
+      <canvas id="salesChart"></canvas>
+    </div>
+
+    <div class="prediction-box" id="predictionBox">
+      <strong>Predicted Sales Next Month:</strong> <span id="predictionValue">Loading...</span>
+    </div>
   </div>
 
   <script>
     const itemSelect = document.getElementById('itemSelect');
+    const yearSelect = document.getElementById('yearSelect');
     const predictionValue = document.getElementById('predictionValue');
+    const itemSearch = document.getElementById('itemSearch');
     let salesChart;
 
-    // Helper to format year-month like "Apr 2025"
+    let allYearMonths = [];
+    let allQuantities = [];
+
     function formatYearMonth(yearMonth) {
       const [year, month] = yearMonth.split('-').map(Number);
       const date = new Date(year, month - 1);
       return date.toLocaleString('default', { month: 'short', year: 'numeric' });
     }
 
-    // Helper to add one month to "YYYY-MM" string
     function addMonth(yearMonth) {
       let [year, month] = yearMonth.split('-').map(Number);
       month += 1;
@@ -63,7 +191,6 @@
       const res = await axios.get('/api/sales-history');
       const itemSales = res.data.filter(s => s.itemId === +itemId);
 
-      // Group sales by year-month
       const salesByYearMonth = {};
       itemSales.forEach(s => {
         const d = new Date(s.date);
@@ -71,12 +198,44 @@
         salesByYearMonth[ym] = (salesByYearMonth[ym] || 0) + s.quantitySold;
       });
 
-      // Sort year-month keys
-      const yearMonths = Object.keys(salesByYearMonth).sort();
-      const quantities = yearMonths.map(ym => salesByYearMonth[ym]);
+      allYearMonths = Object.keys(salesByYearMonth).sort();
+      allQuantities = allYearMonths.map(ym => salesByYearMonth[ym]);
 
-      updateChart(yearMonths, quantities);
-      predictAndCalculateAccuracy(yearMonths, quantities);
+      populateYearSelector(allYearMonths);
+      updateChartAndPrediction('all');
+    }
+
+    function populateYearSelector(yearMonths) {
+      const years = [...new Set(yearMonths.map(ym => ym.split('-')[0]))];
+      yearSelect.querySelectorAll('option:not([value="all"])').forEach(opt => opt.remove());
+      years.forEach(y => {
+        const opt = document.createElement('option');
+        opt.value = y;
+        opt.textContent = y;
+        yearSelect.appendChild(opt);
+      });
+    }
+
+    function updateChartAndPrediction(selectedYear) {
+      let filteredYearMonths = allYearMonths;
+      let filteredQuantities = allQuantities;
+
+      if (selectedYear !== 'all') {
+        filteredYearMonths = allYearMonths.filter(ym => ym.startsWith(selectedYear));
+        filteredQuantities = filteredYearMonths.map(ym => {
+          const index = allYearMonths.indexOf(ym);
+          return allQuantities[index];
+        });
+      }
+
+      if (filteredYearMonths.length === 0) {
+        predictionValue.textContent = 'No data available for selected year';
+        if (salesChart) salesChart.destroy();
+        return;
+      }
+
+      updateChart(filteredYearMonths, filteredQuantities);
+      predictAndCalculateAccuracy(filteredYearMonths, filteredQuantities);
     }
 
     function updateChart(yearMonths, data) {
@@ -88,24 +247,36 @@
           labels: yearMonths.map(formatYearMonth),
           datasets: [{
             data: data.map(Math.round),
-            borderColor: 'blue',
-            fill: false,
+            borderColor: '#000dff',
+            backgroundColor: 'rgba(0, 13, 255, 0.3)',
+            fill: true,
             pointRadius: 6,
             pointHoverRadius: 8,
-            pointBackgroundColor: 'blue',
+            pointBackgroundColor: '#000dff',
           }]
         },
         options: {
           scales: {
             y: {
               beginAtZero: true,
-              ticks: { precision: 0 }
+              ticks: { precision: 0 },
+              grid: {
+                color: 'rgba(255,255,255,0.2)'
+              }
+            },
+            x: {
+              grid: {
+                color: 'rgba(255,255,255,0.2)'
+              }
             }
           },
           plugins: {
             legend: { display: false },
             tooltip: {
               enabled: true,
+              backgroundColor: 'rgba(0, 13, 255, 0.8)',
+              titleColor: '#fff',
+              bodyColor: '#fff',
               callbacks: {
                 label: ctx => `Quantity Sold: ${ctx.parsed.y}`
               }
@@ -115,14 +286,12 @@
       });
     }
 
-    // Predict next month sales and calculate accuracy on last known month using linear regression
     function predictAndCalculateAccuracy(yearMonths, data) {
-      if (yearMonths.length < 3) {  // Need at least 3 data points
+      if (yearMonths.length < 3) {
         predictionValue.textContent = 'Not enough data for accuracy';
         return;
       }
 
-      // Convert yearMonths to numeric index relative to first date
       const firstYearMonth = yearMonths[0];
       function ymToIndex(ym) {
         const [y, m] = ym.split('-').map(Number);
@@ -130,11 +299,9 @@
         return (y - fy) * 12 + (m - fm);
       }
 
-      // Use all except last point to train
       const trainX = yearMonths.slice(0, -1).map(ymToIndex);
       const trainY = data.slice(0, -1);
 
-      // Calculate linear regression slope and intercept
       const n = trainX.length;
       const sumX = trainX.reduce((a,b) => a + b, 0);
       const sumY = trainY.reduce((a,b) => a + b, 0);
@@ -144,16 +311,13 @@
       const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
       const intercept = (sumY - slope * sumX) / n;
 
-      // Predict last known month sales
       const lastIndex = ymToIndex(yearMonths[yearMonths.length - 1]);
       const predictedLast = slope * lastIndex + intercept;
       const actualLast = data[data.length - 1];
 
-      // Calculate accuracy in percentage
       const errorPercent = Math.abs(predictedLast - actualLast) / actualLast * 100;
       const accuracyPercent = 100 - errorPercent;
 
-      // Predict next month sales
       const nextIndex = lastIndex + 1;
       const predictedNext = slope * nextIndex + intercept;
       const nextYearMonth = addMonth(yearMonths[yearMonths.length - 1]);
@@ -163,11 +327,31 @@
         `Prediction Accuracy for last month: <strong>${accuracyPercent.toFixed(2)}%</strong> (based on backtest)`;
     }
 
+    // Filter itemSelect options based on search input
+    itemSearch.addEventListener('input', () => {
+      const filter = itemSearch.value.toLowerCase();
+      for (const option of itemSelect.options) {
+        const text = option.textContent.toLowerCase();
+        option.style.display = text.includes(filter) ? '' : 'none';
+      }
+
+      // Automatically select the first visible option and fetch sales
+      const visibleOptions = [...itemSelect.options].filter(opt => opt.style.display !== 'none');
+      if (visibleOptions.length) {
+        itemSelect.value = visibleOptions[0].value;
+        fetchSales(itemSelect.value);
+      }
+    });
+
     itemSelect.addEventListener('change', () => {
       if (itemSelect.value) fetchSales(itemSelect.value);
     });
 
-    // Initialize
+    yearSelect.addEventListener('change', () => {
+      updateChartAndPrediction(yearSelect.value);
+    });
+
+    // Initialize the dropdown and data
     fetchItems().then(() => {
       if (itemSelect.options.length) {
         itemSelect.value = itemSelect.options[0].value;

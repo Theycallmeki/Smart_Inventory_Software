@@ -4,26 +4,31 @@ const SalesHistory = require('./models/salesHistory');
 async function seedDummySales() {
   await sequelize.sync();
 
-  const dummySales = [
-    { itemId: 2, date: '2025-01-01', quantitySold: 10 },
-    { itemId: 2, date: '2025-02-01', quantitySold: 12 },
-    { itemId: 2, date: '2025-03-01', quantitySold: 15 },
-    { itemId: 2, date: '2025-04-01', quantitySold: 14 },
-    { itemId: 2, date: '2025-05-01', quantitySold: 18 },
-    { itemId: 2, date: '2025-06-01', quantitySold: 20 },
-    { itemId: 2, date: '2025-07-01', quantitySold: 22 },
-    { itemId: 2, date: '2025-08-01', quantitySold: 24 },
-    { itemId: 2, date: '2025-09-01', quantitySold: 23 },
-    { itemId: 2, date: '2025-10-01', quantitySold: 25 },
-    { itemId: 2, date: '2025-11-01', quantitySold: 27 },
-    { itemId: 2, date: '2025-12-01', quantitySold: 30 },
-  ];
+  const itemId = 14;
+  const baseQuantity = 20; // base monthly quantity
+  const years = [2023, 2024, 2025];
+  const dummySales = [];
 
-  for (const sale of dummySales) {
-    await SalesHistory.create(sale);
+  for (const year of years) {
+    for (let month = 1; month <= 12; month++) {
+      const paddedMonth = String(month).padStart(2, '0');
+      const date = `${year}-${paddedMonth}-01`;
+
+      // Optional: Create some basic seasonality
+      let quantitySold = baseQuantity + Math.floor(Math.random() * 10); // add some randomness
+
+      // Simulate seasonal boost in December
+      if (month === 12) quantitySold += 30;
+
+      // Simulate higher sales in July and October
+      if (month === 7 || month === 10) quantitySold += 50;
+
+      dummySales.push({ itemId, date, quantitySold });
+    }
   }
 
-  console.log('✅ Dummy sales for itemId 2 seeded with a clear upward trend and mild seasonality');
+  await SalesHistory.bulkCreate(dummySales);
+  console.log(`✅ Seeded dummy sales data for itemId ${itemId} from 2023 to 2025`);
 }
 
 seedDummySales().then(() => process.exit());

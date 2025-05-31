@@ -6,73 +6,256 @@
   <title>Admin Panel/ Statistics</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      margin: 30px;
-      max-width: 900px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #6b73ff 0%, #000dff 100%);
+      color: #fff;
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
     }
-    table {
-      border-collapse: collapse;
-      width: 100%;
+
+    .main-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+      backdrop-filter: blur(8.5px);
+      -webkit-backdrop-filter: blur(8.5px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      padding: 30px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      font-size: 2.5rem;
+    }
+
+    h2 {
+      font-weight: 600;
       margin-bottom: 20px;
+      font-size: 1.5rem;
     }
-    th, td {
-      border: 1px solid #aaa;
-      padding: 8px;
-      text-align: left;
-    }
-    th {
-      background-color: #f4f4f4;
-    }
+
     .container {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
+      gap: 30px;
     }
+
     .table-container {
-      flex: 0 1 auto;
-      width: 55%;
-      margin-right: 20px;
+      flex: 1;
+      min-width: 300px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     }
+
     .chart-container {
-      flex: 0 0 auto;
-      width: 40%;
+      flex: 0 0 350px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      text-align: center;
     }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    th, td {
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 12px 8px;
+      text-align: left;
+    }
+
+    th {
+      background: rgba(255, 255, 255, 0.2);
+      font-weight: 600;
+      color: #fff;
+    }
+
+    td {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    tr:hover td {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
     #categoryChart {
-      width: 300px !important;
+      width: 100% !important;
+      max-width: 300px !important;
       height: 300px !important;
+      margin: 0 auto;
+    }
+
+    /* Mobile Responsive Styles */
+    @media (max-width: 768px) {
+      body {
+        padding: 10px;
+      }
+
+      .main-container {
+        padding: 20px;
+      }
+
+      h1 {
+        font-size: 2rem;
+        margin-bottom: 20px;
+      }
+
+      h2 {
+        font-size: 1.3rem;
+        text-align: center;
+      }
+
+      .container {
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .table-container {
+        width: 100%;
+        padding: 15px;
+        overflow-x: auto;
+      }
+
+      .chart-container {
+        flex: none;
+        width: 100%;
+        padding: 15px;
+      }
+
+      table {
+        font-size: 0.9rem;
+        min-width: 400px;
+      }
+
+      th, td {
+        padding: 8px 6px;
+      }
+
+      #categoryChart {
+        width: 100% !important;
+        max-width: 280px !important;
+        height: 280px !important;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .main-container {
+        padding: 15px;
+      }
+
+      h1 {
+        font-size: 1.8rem;
+      }
+
+      h2 {
+        font-size: 1.2rem;
+      }
+
+      .table-container, .chart-container {
+        padding: 10px;
+      }
+
+      table {
+        font-size: 0.8rem;
+        min-width: 350px;
+      }
+
+      th, td {
+        padding: 6px 4px;
+      }
+
+      #categoryChart {
+        max-width: 250px !important;
+        height: 250px !important;
+      }
+    }
+
+    /* Scrollbar styling for webkit browsers */
+    .table-container::-webkit-scrollbar {
+      height: 8px;
+    }
+
+    .table-container::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+
+    .table-container::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 4px;
+    }
+
+    .table-container::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.5);
+    }
+
+    /* Loading state */
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    /* Error state */
+    .error {
+      text-align: center;
+      padding: 20px;
+      color: #ff6b6b;
+      background: rgba(255, 107, 107, 0.1);
+      border-radius: 8px;
+      margin: 10px 0;
     }
   </style>
 </head>
 <body>
 
-  <h1>Admin Panel</h1>
-  <h2>Inventory Items</h2>
+  <div class="main-container">
+    <h1>Admin Panel</h1>
+    
+    <div class="container">
+      <!-- Item Data Table -->
+      <div class="table-container">
+        <h2>Inventory Items</h2>
+        <div id="tableLoading" class="loading">Loading items...</div>
+        <table id="itemsTable" style="display: none;">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Quantity</th>
+              <th>Category</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- JS will fill this -->
+          </tbody>
+        </table>
+        <div id="tableError" class="error" style="display: none;"></div>
+      </div>
 
-  <div class="container">
-
-    <!-- Item Data Table -->
-    <div class="table-container">
-      <table id="itemsTable">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Quantity</th>
-            <th>Category</th>
-          </tr>
-        </thead>
-        <tbody>
-          <!-- JS will fill this -->
-        </tbody>
-      </table>
+      <!-- Category Frequency Chart -->
+      <div class="chart-container">
+        <h2>Category Demand Chart</h2>
+        <div id="chartLoading" class="loading">Loading chart...</div>
+        <canvas id="categoryChart" style="display: none;"></canvas>
+        <div id="chartError" class="error" style="display: none;"></div>
+      </div>
     </div>
-
-    <!-- Category Frequency Chart -->
-    <div class="chart-container">
-      <h2>Category Frequency Chart</h2>
-      <canvas id="categoryChart"></canvas>
-    </div>
-
   </div>
 
   <!-- Chart.js CDN -->
@@ -87,45 +270,57 @@
         return await res.json();
       } catch (err) {
         console.error(err);
-        return [];
+        throw err;
       }
     }
 
     // Render items table rows
     function renderTable(items) {
       const tbody = document.querySelector('#itemsTable tbody');
+      const tableElement = document.getElementById('itemsTable');
+      const loadingElement = document.getElementById('tableLoading');
+      const errorElement = document.getElementById('tableError');
+      
       tbody.innerHTML = ''; // Clear existing rows
-      items.forEach(item => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${item.id}</td>
-          <td>${item.name}</td>
-          <td>${item.quantity}</td>
-          <td>${item.category || 'Uncategorized'}</td>
-        `;
-        tbody.appendChild(tr);
-      });
+      
+      if (items.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: rgba(255,255,255,0.7);">No items found</td></tr>';
+      } else {
+        items.forEach(item => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${item.id}</td>
+            <td>${item.name}</td>
+            <td>${item.quantity}</td>
+            <td>${item.category || 'Uncategorized'}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+      
+      loadingElement.style.display = 'none';
+      errorElement.style.display = 'none';
+      tableElement.style.display = 'table';
     }
 
-    // Calculate category frequencies
-   // Calculate total quantity per category
-// Calculate number of items per category (frequency count)
-        function getCategoryFrequencies(items) {
-        const freqMap = {};
-        items.forEach(item => {
-            const cat = item.category || 'Uncategorized';
-            freqMap[cat] = (freqMap[cat] || 0) + 1;
-        });
-        const categoryNames = Object.keys(freqMap);
-        const frequencies = Object.values(freqMap);
-        return { categoryNames, frequencies };
-        }
-
-
+    // Calculate number of items per category (frequency count)
+    function getCategoryFrequencies(items) {
+      const freqMap = {};
+      items.forEach(item => {
+        const cat = item.category || 'Uncategorized';
+        freqMap[cat] = (freqMap[cat] || 0) + 1;
+      });
+      const categoryNames = Object.keys(freqMap);
+      const frequencies = Object.values(freqMap);
+      return { categoryNames, frequencies };
+    }
 
     // Render doughnut chart for category frequencies
     function renderChart(categories, frequencies) {
       const ctx = document.getElementById('categoryChart').getContext('2d');
+      const loadingElement = document.getElementById('chartLoading');
+      const errorElement = document.getElementById('chartError');
+      const chartElement = document.getElementById('categoryChart');
 
       const total = frequencies.reduce((a, b) => a + b, 0);
       const percentages = frequencies.map(f => ((f / total) * 100).toFixed(2));
@@ -138,13 +333,13 @@
             label: 'Category Frequency',
             data: frequencies,
             backgroundColor: [
-              'rgba(75, 192, 192, 0.6)',
-              'rgba(153, 102, 255, 0.6)',
-              'rgba(255, 159, 64, 0.6)',
-              'rgba(255, 99, 132, 0.6)',
-              'rgba(54, 162, 235, 0.6)',
-              'rgba(255, 205, 86, 0.6)',
-              'rgba(201, 203, 207, 0.6)'
+              'rgba(75, 192, 192, 0.8)',
+              'rgba(153, 102, 255, 0.8)',
+              'rgba(255, 159, 64, 0.8)',
+              'rgba(255, 99, 132, 0.8)',
+              'rgba(54, 162, 235, 0.8)',
+              'rgba(255, 205, 86, 0.8)',
+              'rgba(201, 203, 207, 0.8)'
             ],
             borderColor: [
               'rgba(75, 192, 192, 1)',
@@ -155,11 +350,12 @@
               'rgba(255, 205, 86, 1)',
               'rgba(201, 203, 207, 1)'
             ],
-            borderWidth: 1
+            borderWidth: 2
           }]
         },
         options: {
           responsive: true,
+          maintainAspectRatio: true,
           plugins: {
             tooltip: {
               callbacks: {
@@ -172,22 +368,56 @@
               }
             },
             legend: {
-              position: 'top',
+              position: 'bottom',
+              labels: {
+                color: '#fff',
+                padding: 20,
+                usePointStyle: true
+              }
             }
           }
         }
       });
+
+      loadingElement.style.display = 'none';
+      errorElement.style.display = 'none';
+      chartElement.style.display = 'block';
     }
 
-    // Main
+    // Show error message
+    function showError(message, isTable = true) {
+      const loadingElement = document.getElementById(isTable ? 'tableLoading' : 'chartLoading');
+      const errorElement = document.getElementById(isTable ? 'tableError' : 'chartError');
+      
+      loadingElement.style.display = 'none';
+      errorElement.textContent = message;
+      errorElement.style.display = 'block';
+    }
+
+    // Main initialization function
     async function init() {
-      const items = await fetchItems();
-      renderTable(items);
-      const { categoryNames, frequencies } = getCategoryFrequencies(items);
-      renderChart(categoryNames, frequencies);
+      try {
+        const items = await fetchItems();
+        renderTable(items);
+        
+        const { categoryNames, frequencies } = getCategoryFrequencies(items);
+        if (categoryNames.length > 0) {
+          renderChart(categoryNames, frequencies);
+        } else {
+          showError('No data available for chart', false);
+        }
+      } catch (error) {
+        showError('Failed to load items. Please try again later.', true);
+        showError('Failed to load chart data.', false);
+      }
     }
 
-    init();
+    // Initialize when DOM is loaded
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
   </script>
 
 </body>
