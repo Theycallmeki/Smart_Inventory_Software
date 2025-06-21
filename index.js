@@ -17,30 +17,12 @@ sequelize.sync().then(() => {
   console.log('✅ Database synced.');
 });
 
-// Serve home.html
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'views', 'home.html'));
-});
-
-// Serve item.html
-app.get('/item', (req, res) => {
-  res.sendFile(path.join(__dirname, 'views', 'item.html'));
-});
-
-// Serve admin.html
-app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'views', 'admin.html'));
-});
-
-// Serve salesHistory.html page
-app.get('/sales-history', (req, res) => {
-  res.sendFile(path.join(__dirname, 'views', 'salesHistory.html'));
-});
-
-// Serve prediction.html page
-app.get('/prediction', (req, res) => {
-  res.sendFile(path.join(__dirname, 'views', 'prediction.html'));
-});
+// Serve HTML pages
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'views', 'home.html')));
+app.get('/item', (req, res) => res.sendFile(path.join(__dirname, 'views', 'item.html')));
+app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'views', 'admin.html')));
+app.get('/sales-history', (req, res) => res.sendFile(path.join(__dirname, 'views', 'salesHistory.html')));
+app.get('/prediction', (req, res) => res.sendFile(path.join(__dirname, 'views', 'prediction.html')));
 
 // API: Get all items
 app.get('/items', async (req, res) => {
@@ -52,9 +34,15 @@ app.get('/items', async (req, res) => {
   }
 });
 
-// API: Create item
+// API: Create item with category validation
 app.post('/items', async (req, res) => {
   const { name, quantity, category, price } = req.body;
+
+  const validCategories = Item.rawAttributes.category.values;
+  if (!validCategories.includes(category)) {
+    return res.status(400).json({ error: `Invalid category. Allowed: ${validCategories.join(', ')}` });
+  }
+
   try {
     const item = await Item.create({ name, quantity, category, price });
     res.status(201).json(item);
@@ -63,20 +51,25 @@ app.post('/items', async (req, res) => {
   }
 });
 
-// API: Update name/category/price/quantity
+// API: Update item with category validation
 app.put('/items/:id', async (req, res) => {
   const { id } = req.params;
   const { name, category, price, quantity } = req.body;
+
   try {
     const item = await Item.findByPk(id);
     if (!item) return res.status(404).json({ error: 'Item not found' });
 
-    item.name = name || item.name;
-    item.category = category || item.category;
+    if (category && !Item.rawAttributes.category.values.includes(category)) {
+      return res.status(400).json({ error: `Invalid category. Allowed: ${Item.rawAttributes.category.values.join(', ')}` });
+    }
+
+    item.name = name ?? item.name;
+    item.category = category ?? item.category;
     if (price !== undefined) item.price = price;
     if (quantity !== undefined) item.quantity = quantity;
-    await item.save();
 
+    await item.save();
     res.json(item);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -97,7 +90,7 @@ app.delete('/items/:id', async (req, res) => {
   }
 });
 
-// API: Get all sales history with associated Item data
+// API: Get all sales history with associated item
 app.get('/api/sales-history', async (req, res) => {
   try {
     const sales = await SalesHistory.findAll({
@@ -109,7 +102,7 @@ app.get('/api/sales-history', async (req, res) => {
   }
 });
 
-// API: Create a new sales history record and update item quantity
+// API: Create sales history record
 app.post('/api/sales-history', async (req, res) => {
   const { itemId, date, quantitySold } = req.body;
 
@@ -121,10 +114,8 @@ app.post('/api/sales-history', async (req, res) => {
       return res.status(400).json({ error: 'Insufficient stock' });
     }
 
-    // Create the sales history record
     const sale = await SalesHistory.create({ itemId, date, quantitySold });
 
-    // Decrease the item quantity
     item.quantity -= quantitySold;
     await item.save();
 
