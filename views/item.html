@@ -140,6 +140,7 @@
   <table id="itemTable">
     <thead>
       <tr>
+        <th>ID</th>
         <th>Name</th>
         <th>Category</th>
         <th>Quantity</th>
@@ -203,6 +204,7 @@
       items.forEach(item => {
         const row = document.createElement('tr');
         row.innerHTML = `
+          <td><strong>${item.id}</strong></td>
           <td><input value="${item.name}" data-id="${item.id}" class="edit-name" /></td>
           <td>
             <select data-id="${item.id}" class="edit-category">

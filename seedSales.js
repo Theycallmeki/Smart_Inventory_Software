@@ -5,40 +5,34 @@ async function seedDummySales() {
   try {
     await sequelize.sync();
 
-    // All IDs except 2
+    // Use all available itemIds except 2
     const itemIds = [
-      3, 4, 5, 6, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28,
-      29, 30, 31, 32, 33, 34
+      5,6,7
     ];
 
-    const baseQuantity = 20;
-    const years = [2023, 2024, 2025];
     const dummySales = [];
+    const usedCombinations = new Set();
 
-    for (const itemId of itemIds) {
-      for (const year of years) {
-        for (let month = 1; month <= 12; month++) {
-          const paddedMonth = String(month).padStart(2, '0');
-          const date = `${year}-${paddedMonth}-01`;
+    while (dummySales.length < 100) {
+      const itemId = itemIds[Math.floor(Math.random() * itemIds.length)];
+      const year = 2023 + Math.floor(Math.random() * 3); // 2023–2025
+      const month = 1 + Math.floor(Math.random() * 12);
+      const paddedMonth = String(month).padStart(2, '0');
+      const date = `${year}-${paddedMonth}-01`;
 
-          let quantitySold = baseQuantity + Math.floor(Math.random() * 10);
+      const key = `${itemId}-${date}`;
+      if (usedCombinations.has(key)) continue;
+      usedCombinations.add(key);
 
-          // Seasonal boosts
-          if (month === 12) quantitySold += 30;
-          if (month === 7 || month === 10) quantitySold += 50;
+      let quantitySold = 10 + Math.floor(Math.random() * 100); // Range: 10–109
 
-          // Slight variation by item
-          quantitySold += Math.floor(Math.random() * 5 * itemIds.indexOf(itemId));
-
-          dummySales.push({ itemId, date, quantitySold });
-        }
-      }
+      dummySales.push({ itemId, date, quantitySold });
     }
 
     await SalesHistory.bulkCreate(dummySales);
-    console.log(`✅ Seeded dummy sales data for itemIds except 2 from 2023 to 2025`);
+    console.log('✅ Seeded 100 dummy sales records.');
   } catch (error) {
-    console.error('Error seeding dummy sales:', error);
+    console.error('❌ Error seeding dummy sales:', error);
   } finally {
     await sequelize.close();
   }
