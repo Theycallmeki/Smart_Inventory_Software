@@ -1,6 +1,36 @@
 /* salesHistory.css */
+.fixed-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: #000dff;
+  padding: 10px 20px;
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  box-sizing: border-box;
+  z-index: 1000;
+}
+
+.fixed-header a {
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.3s ease;
+}
+
+.fixed-header a:hover {
+  color: #aabaff;
+}
+
+/* Add top padding to container so content isn't hidden behind fixed header */
+.container {
+  padding-top: 60px; /* Adjust this value if your header height changes */
+}
+
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   background: linear-gradient(135deg, #6b73ff 0%, #000dff 100%);
   color: #fff;
   margin: 0;
@@ -32,7 +62,8 @@ h1 {
   font-size: 2.5em;
 }
 
-h2, h3 {
+h2,
+h3 {
   font-weight: 600;
   margin-bottom: 20px;
   color: #fff;
@@ -53,7 +84,9 @@ label {
   min-width: 120px;
 }
 
-select, input[type="number"], input[type="text"] {
+select,
+input[type="number"],
+input[type="text"] {
   padding: 12px 15px;
   border: none;
   border-radius: 25px;
@@ -64,11 +97,13 @@ select, input[type="number"], input[type="text"] {
   font-size: 14px;
 }
 
-select::placeholder, input::placeholder {
+select::placeholder,
+input::placeholder {
   color: rgba(255, 255, 255, 0.7);
 }
 
-select:focus, input:focus {
+select:focus,
+input:focus {
   outline: none;
   background: rgba(255, 255, 255, 0.3);
   box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
@@ -162,26 +197,29 @@ tr:hover {
   .container {
     padding: 10px;
   }
-  
+
   .glass-card {
     padding: 20px;
   }
-  
+
   .form-row {
     flex-direction: column;
     align-items: flex-start;
   }
-  
-  select, input[type="number"], input[type="text"] {
+
+  select,
+  input[type="number"],
+  input[type="text"] {
     width: 100%;
     min-width: unset;
   }
-  
+
   table {
     font-size: 14px;
   }
-  
-  th, td {
+
+  th,
+  td {
     padding: 8px;
   }
 }

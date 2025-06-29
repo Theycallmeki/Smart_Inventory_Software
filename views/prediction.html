@@ -1,250 +1,276 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Sales Prediction with Accuracy</title>
-  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link rel="stylesheet" href="prediction.css" />
-</head>
-<body>
-  <div class="container">
-    <h1>Sales Prediction / Linear Regression Basis</h1>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sales Prediction with Accuracy</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="prediction.css" />
+  </head>
+  <body>
+    <header class="fixed-header">
+      <a href="/">Home</a>
+      <a href="/item"> Items</a>
+      <a href="/admin"> Admin Panel</a>
+      <a href="/sales-history"> Sales History</a>
+      <a href="/prediction"> Prediction</a>
+    </header>
+    <div class="container">
+      <h1>Sales Prediction / Linear Regression Basis</h1>
 
-    <div class="form-group">
-      <label for="itemSearch">Search Item:</label>
-      <input type="text" id="itemSearch" placeholder="Type to search..." />
+      <div class="form-group">
+        <label for="itemSearch">Search Item:</label>
+        <input type="text" id="itemSearch" placeholder="Type to search..." />
+      </div>
+
+      <div class="form-group">
+        <label for="itemSelect">Select Item:</label>
+        <select id="itemSelect"></select>
+      </div>
+
+      <div class="form-group">
+        <label for="yearSelect">Select Year:</label>
+        <select id="yearSelect">
+          <option value="all">All Years</option>
+        </select>
+      </div>
+
+      <div class="chart-container">
+        <canvas id="salesChart"></canvas>
+      </div>
+
+      <div class="prediction-box" id="predictionBox">
+        <strong>Predicted Sales Next Month:</strong>
+        <span id="predictionValue">Loading...</span>
+      </div>
     </div>
 
-    <div class="form-group">
-      <label for="itemSelect">Select Item:</label>
-      <select id="itemSelect"></select>
-    </div>
+    <script>
+      const itemSelect = document.getElementById("itemSelect");
+      const yearSelect = document.getElementById("yearSelect");
+      const predictionValue = document.getElementById("predictionValue");
+      const itemSearch = document.getElementById("itemSearch");
+      let salesChart;
 
-    <div class="form-group">
-      <label for="yearSelect">Select Year:</label>
-      <select id="yearSelect">
-        <option value="all">All Years</option>
-      </select>
-    </div>
+      let allYearMonths = [];
+      let allQuantities = [];
 
-    <div class="chart-container">
-      <canvas id="salesChart"></canvas>
-    </div>
-
-    <div class="prediction-box" id="predictionBox">
-      <strong>Predicted Sales Next Month:</strong> <span id="predictionValue">Loading...</span>
-    </div>
-  </div>
-
-  <script>
-    const itemSelect = document.getElementById('itemSelect');
-    const yearSelect = document.getElementById('yearSelect');
-    const predictionValue = document.getElementById('predictionValue');
-    const itemSearch = document.getElementById('itemSearch');
-    let salesChart;
-
-    let allYearMonths = [];
-    let allQuantities = [];
-
-    function formatYearMonth(yearMonth) {
-      const [year, month] = yearMonth.split('-').map(Number);
-      const date = new Date(year, month - 1);
-      return date.toLocaleString('default', { month: 'short', year: 'numeric' });
-    }
-
-    function addMonth(yearMonth) {
-      let [year, month] = yearMonth.split('-').map(Number);
-      month += 1;
-      if (month > 12) {
-        month = 1;
-        year += 1;
-      }
-      return `${year}-${month.toString().padStart(2, '0')}`;
-    }
-
-    async function fetchItems() {
-      const res = await axios.get('/api/items');
-      res.data.forEach(item => {
-        const opt = document.createElement('option');
-        opt.value = item.id;
-        opt.textContent = item.name;
-        itemSelect.appendChild(opt);
-      });
-    }
-
-    async function fetchSales(itemId) {
-      const res = await axios.get('/api/sales-history');
-      const itemSales = res.data.filter(s => s.itemId === +itemId);
-
-      const salesByYearMonth = {};
-      itemSales.forEach(s => {
-        const d = new Date(s.date);
-        const ym = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`;
-        salesByYearMonth[ym] = (salesByYearMonth[ym] || 0) + s.quantitySold;
-      });
-
-      allYearMonths = Object.keys(salesByYearMonth).sort();
-      allQuantities = allYearMonths.map(ym => salesByYearMonth[ym]);
-
-      populateYearSelector(allYearMonths);
-      updateChartAndPrediction('all');
-    }
-
-    function populateYearSelector(yearMonths) {
-      const years = [...new Set(yearMonths.map(ym => ym.split('-')[0]))];
-      yearSelect.querySelectorAll('option:not([value="all"])').forEach(opt => opt.remove());
-      years.forEach(y => {
-        const opt = document.createElement('option');
-        opt.value = y;
-        opt.textContent = y;
-        yearSelect.appendChild(opt);
-      });
-    }
-
-    function updateChartAndPrediction(selectedYear) {
-      let filteredYearMonths = allYearMonths;
-      let filteredQuantities = allQuantities;
-
-      if (selectedYear !== 'all') {
-        filteredYearMonths = allYearMonths.filter(ym => ym.startsWith(selectedYear));
-        filteredQuantities = filteredYearMonths.map(ym => {
-          const index = allYearMonths.indexOf(ym);
-          return allQuantities[index];
+      function formatYearMonth(yearMonth) {
+        const [year, month] = yearMonth.split("-").map(Number);
+        const date = new Date(year, month - 1);
+        return date.toLocaleString("default", {
+          month: "short",
+          year: "numeric",
         });
       }
 
-      if (filteredYearMonths.length === 0) {
-        predictionValue.textContent = 'No data available for selected year';
-        if (salesChart) salesChart.destroy();
-        return;
+      function addMonth(yearMonth) {
+        let [year, month] = yearMonth.split("-").map(Number);
+        month += 1;
+        if (month > 12) {
+          month = 1;
+          year += 1;
+        }
+        return `${year}-${month.toString().padStart(2, "0")}`;
       }
 
-      updateChart(filteredYearMonths, filteredQuantities);
-      predictAndCalculateAccuracy(filteredYearMonths, filteredQuantities);
-    }
+      async function fetchItems() {
+        const res = await axios.get("/api/items");
+        res.data.forEach((item) => {
+          const opt = document.createElement("option");
+          opt.value = item.id;
+          opt.textContent = item.name;
+          itemSelect.appendChild(opt);
+        });
+      }
 
-    function updateChart(yearMonths, data) {
-      const ctx = document.getElementById('salesChart').getContext('2d');
-      if (salesChart) salesChart.destroy();
-      salesChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: yearMonths.map(formatYearMonth),
-          datasets: [{
-            data: data.map(Math.round),
-            borderColor: '#000dff',
-            backgroundColor: 'rgba(0, 13, 255, 0.3)',
-            fill: true,
-            pointRadius: 6,
-            pointHoverRadius: 8,
-            pointBackgroundColor: '#000dff',
-          }]
-        },
-        options: {
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: { precision: 0 },
-              grid: {
-                color: 'rgba(255,255,255,0.2)'
-              }
-            },
-            x: {
-              grid: {
-                color: 'rgba(255,255,255,0.2)'
-              }
-            }
+      async function fetchSales(itemId) {
+        const res = await axios.get("/api/sales-history");
+        const itemSales = res.data.filter((s) => s.itemId === +itemId);
+
+        const salesByYearMonth = {};
+        itemSales.forEach((s) => {
+          const d = new Date(s.date);
+          const ym = `${d.getFullYear()}-${(d.getMonth() + 1)
+            .toString()
+            .padStart(2, "0")}`;
+          salesByYearMonth[ym] = (salesByYearMonth[ym] || 0) + s.quantitySold;
+        });
+
+        allYearMonths = Object.keys(salesByYearMonth).sort();
+        allQuantities = allYearMonths.map((ym) => salesByYearMonth[ym]);
+
+        populateYearSelector(allYearMonths);
+        updateChartAndPrediction("all");
+      }
+
+      function populateYearSelector(yearMonths) {
+        const years = [...new Set(yearMonths.map((ym) => ym.split("-")[0]))];
+        yearSelect
+          .querySelectorAll('option:not([value="all"])')
+          .forEach((opt) => opt.remove());
+        years.forEach((y) => {
+          const opt = document.createElement("option");
+          opt.value = y;
+          opt.textContent = y;
+          yearSelect.appendChild(opt);
+        });
+      }
+
+      function updateChartAndPrediction(selectedYear) {
+        let filteredYearMonths = allYearMonths;
+        let filteredQuantities = allQuantities;
+
+        if (selectedYear !== "all") {
+          filteredYearMonths = allYearMonths.filter((ym) =>
+            ym.startsWith(selectedYear)
+          );
+          filteredQuantities = filteredYearMonths.map((ym) => {
+            const index = allYearMonths.indexOf(ym);
+            return allQuantities[index];
+          });
+        }
+
+        if (filteredYearMonths.length === 0) {
+          predictionValue.textContent = "No data available for selected year";
+          if (salesChart) salesChart.destroy();
+          return;
+        }
+
+        updateChart(filteredYearMonths, filteredQuantities);
+        predictAndCalculateAccuracy(filteredYearMonths, filteredQuantities);
+      }
+
+      function updateChart(yearMonths, data) {
+        const ctx = document.getElementById("salesChart").getContext("2d");
+        if (salesChart) salesChart.destroy();
+        salesChart = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: yearMonths.map(formatYearMonth),
+            datasets: [
+              {
+                data: data.map(Math.round),
+                borderColor: "#000dff",
+                backgroundColor: "rgba(0, 13, 255, 0.3)",
+                fill: true,
+                pointRadius: 6,
+                pointHoverRadius: 8,
+                pointBackgroundColor: "#000dff",
+              },
+            ],
           },
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              enabled: true,
-              backgroundColor: 'rgba(0, 13, 255, 0.8)',
-              titleColor: '#fff',
-              bodyColor: '#fff',
-              callbacks: {
-                label: ctx => `Quantity Sold: ${ctx.parsed.y}`
-              }
-            }
-          }
+          options: {
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: { precision: 0 },
+                grid: {
+                  color: "rgba(255,255,255,0.2)",
+                },
+              },
+              x: {
+                grid: {
+                  color: "rgba(255,255,255,0.2)",
+                },
+              },
+            },
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                enabled: true,
+                backgroundColor: "rgba(0, 13, 255, 0.8)",
+                titleColor: "#fff",
+                bodyColor: "#fff",
+                callbacks: {
+                  label: (ctx) => `Quantity Sold: ${ctx.parsed.y}`,
+                },
+              },
+            },
+          },
+        });
+      }
+
+      function predictAndCalculateAccuracy(yearMonths, data) {
+        if (yearMonths.length < 3) {
+          predictionValue.textContent = "Not enough data for accuracy";
+          return;
+        }
+
+        const firstYearMonth = yearMonths[0];
+        function ymToIndex(ym) {
+          const [y, m] = ym.split("-").map(Number);
+          const [fy, fm] = firstYearMonth.split("-").map(Number);
+          return (y - fy) * 12 + (m - fm);
+        }
+
+        const trainX = yearMonths.slice(0, -1).map(ymToIndex);
+        const trainY = data.slice(0, -1);
+
+        const n = trainX.length;
+        const sumX = trainX.reduce((a, b) => a + b, 0);
+        const sumY = trainY.reduce((a, b) => a + b, 0);
+        const sumXY = trainX.reduce((acc, val, i) => acc + val * trainY[i], 0);
+        const sumX2 = trainX.reduce((acc, val) => acc + val * val, 0);
+
+        const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+        const intercept = (sumY - slope * sumX) / n;
+
+        const lastIndex = ymToIndex(yearMonths[yearMonths.length - 1]);
+        const predictedLast = slope * lastIndex + intercept;
+        const actualLast = data[data.length - 1];
+
+        const errorPercent =
+          (Math.abs(predictedLast - actualLast) / actualLast) * 100;
+        const accuracyPercent = 100 - errorPercent;
+
+        const nextIndex = lastIndex + 1;
+        const predictedNext = slope * nextIndex + intercept;
+        const nextYearMonth = addMonth(yearMonths[yearMonths.length - 1]);
+
+        predictionValue.innerHTML =
+          `Next month (${formatYearMonth(nextYearMonth)}): <strong>${Math.round(
+            predictedNext
+          )}</strong><br>` +
+          `Prediction Accuracy for last month: <strong>${accuracyPercent.toFixed(
+            2
+          )}%</strong> (based on backtest)`;
+      }
+
+      // Filter itemSelect options based on search input
+      itemSearch.addEventListener("input", () => {
+        const filter = itemSearch.value.toLowerCase();
+        for (const option of itemSelect.options) {
+          const text = option.textContent.toLowerCase();
+          option.style.display = text.includes(filter) ? "" : "none";
+        }
+
+        // Automatically select the first visible option and fetch sales
+        const visibleOptions = [...itemSelect.options].filter(
+          (opt) => opt.style.display !== "none"
+        );
+        if (visibleOptions.length) {
+          itemSelect.value = visibleOptions[0].value;
+          fetchSales(itemSelect.value);
         }
       });
-    }
 
-    function predictAndCalculateAccuracy(yearMonths, data) {
-      if (yearMonths.length < 3) {
-        predictionValue.textContent = 'Not enough data for accuracy';
-        return;
-      }
+      itemSelect.addEventListener("change", () => {
+        if (itemSelect.value) fetchSales(itemSelect.value);
+      });
 
-      const firstYearMonth = yearMonths[0];
-      function ymToIndex(ym) {
-        const [y, m] = ym.split('-').map(Number);
-        const [fy, fm] = firstYearMonth.split('-').map(Number);
-        return (y - fy) * 12 + (m - fm);
-      }
+      yearSelect.addEventListener("change", () => {
+        updateChartAndPrediction(yearSelect.value);
+      });
 
-      const trainX = yearMonths.slice(0, -1).map(ymToIndex);
-      const trainY = data.slice(0, -1);
-
-      const n = trainX.length;
-      const sumX = trainX.reduce((a,b) => a + b, 0);
-      const sumY = trainY.reduce((a,b) => a + b, 0);
-      const sumXY = trainX.reduce((acc, val, i) => acc + val * trainY[i], 0);
-      const sumX2 = trainX.reduce((acc, val) => acc + val * val, 0);
-
-      const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
-      const intercept = (sumY - slope * sumX) / n;
-
-      const lastIndex = ymToIndex(yearMonths[yearMonths.length - 1]);
-      const predictedLast = slope * lastIndex + intercept;
-      const actualLast = data[data.length - 1];
-
-      const errorPercent = Math.abs(predictedLast - actualLast) / actualLast * 100;
-      const accuracyPercent = 100 - errorPercent;
-
-      const nextIndex = lastIndex + 1;
-      const predictedNext = slope * nextIndex + intercept;
-      const nextYearMonth = addMonth(yearMonths[yearMonths.length - 1]);
-
-      predictionValue.innerHTML =
-        `Next month (${formatYearMonth(nextYearMonth)}): <strong>${Math.round(predictedNext)}</strong><br>` +
-        `Prediction Accuracy for last month: <strong>${accuracyPercent.toFixed(2)}%</strong> (based on backtest)`;
-    }
-
-    // Filter itemSelect options based on search input
-    itemSearch.addEventListener('input', () => {
-      const filter = itemSearch.value.toLowerCase();
-      for (const option of itemSelect.options) {
-        const text = option.textContent.toLowerCase();
-        option.style.display = text.includes(filter) ? '' : 'none';
-      }
-
-      // Automatically select the first visible option and fetch sales
-      const visibleOptions = [...itemSelect.options].filter(opt => opt.style.display !== 'none');
-      if (visibleOptions.length) {
-        itemSelect.value = visibleOptions[0].value;
-        fetchSales(itemSelect.value);
-      }
-    });
-
-    itemSelect.addEventListener('change', () => {
-      if (itemSelect.value) fetchSales(itemSelect.value);
-    });
-
-    yearSelect.addEventListener('change', () => {
-      updateChartAndPrediction(yearSelect.value);
-    });
-
-    // Initialize the dropdown and data
-    fetchItems().then(() => {
-      if (itemSelect.options.length) {
-        itemSelect.value = itemSelect.options[0].value;
-        fetchSales(itemSelect.value);
-      }
-    });
-  </script>
-</body>
+      // Initialize the dropdown and data
+      fetchItems().then(() => {
+        if (itemSelect.options.length) {
+          itemSelect.value = itemSelect.options[0].value;
+          fetchSales(itemSelect.value);
+        }
+      });
+    </script>
+  </body>
 </html>

@@ -1,5 +1,35 @@
+.fixed-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: #000dff;
+  padding: 10px 20px;
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  box-sizing: border-box;
+  z-index: 1000;
+}
+
+.fixed-header a {
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.3s ease;
+}
+
+.fixed-header a:hover {
+  color: #aabaff;
+}
+
+/* Add top padding to container so content isn't hidden behind fixed header */
+.container {
+  padding-top: 60px; /* Adjust this value if your header height changes */
+}
+
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   background: linear-gradient(135deg, #6b73ff 0%, #000dff 100%);
   color: #fff;
   margin: 0;

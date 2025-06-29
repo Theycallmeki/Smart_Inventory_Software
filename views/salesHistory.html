@@ -1,144 +1,163 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Sales History</title>
-  <link rel="stylesheet" href="/salesHistory.css" />
-</head>
-<body>
-  <div class="container">
-    <h1>Sales History</h1>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sales History</title>
+    <link rel="stylesheet" href="/salesHistory.css" />
+  </head>
+  <body>
+    <header class="fixed-header">
+      <a href="/">Home</a>
+      <a href="/item">Items</a>
+      <a href="/admin"> Admin Panel</a>
+      <a href="/sales-history"> Sales History</a>
+      <a href="/prediction"> Prediction</a>
+    </header>
+    <div class="container">
+      <h1>Sales History</h1>
 
-    <div class="glass-card">
-      <form id="transactionForm">
-        <h3>Add Items to Transaction</h3>
-        
-        <div class="form-row">
-          <label for="itemId">Item:</label>
-          <select id="itemId" name="itemId" required></select>
-        </div>
+      <div class="glass-card">
+        <form id="transactionForm">
+          <h3>Add Items to Transaction</h3>
 
-        <div class="form-row">
-          <label for="quantitySold">Quantity Sold:</label>
-          <input type="number" id="quantitySold" name="quantitySold" min="1" required />
-          <button type="button" id="addToCartBtn">Add to Cart</button>
-        </div>
+          <div class="form-row">
+            <label for="itemId">Item:</label>
+            <select id="itemId" name="itemId" required></select>
+          </div>
 
-        <table id="cartTable">
+          <div class="form-row">
+            <label for="quantitySold">Quantity Sold:</label>
+            <input
+              type="number"
+              id="quantitySold"
+              name="quantitySold"
+              min="1"
+              required
+            />
+            <button type="button" id="addToCartBtn">Add to Cart</button>
+          </div>
+
+          <table id="cartTable">
+            <thead>
+              <tr>
+                <th>Item Name</th>
+                <th>Quantity</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+
+          <button type="submit" style="margin-top: 20px">
+            Submit Transaction
+          </button>
+        </form>
+      </div>
+
+      <div class="glass-card">
+        <h2>Sales History</h2>
+        <table id="salesTable">
           <thead>
             <tr>
               <th>Item Name</th>
-              <th>Quantity</th>
-              <th>Action</th>
+              <th>Category</th>
+              <th>Price</th>
+              <th>Date</th>
+              <th>Quantity Sold</th>
             </tr>
           </thead>
           <tbody></tbody>
         </table>
-
-        <button type="submit" style="margin-top: 20px;">Submit Transaction</button>
-      </form>
+      </div>
     </div>
 
-    <div class="glass-card">
-      <h2>Sales History</h2>
-      <table id="salesTable">
-        <thead>
-          <tr>
-            <th>Item Name</th>
-            <th>Category</th>
-            <th>Price</th>
-            <th>Date</th>
-            <th>Quantity Sold</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-  </div>
+    <script>
+      let itemsList = [];
+      let cart = [];
 
-  <script>
-    let itemsList = [];
-    let cart = [];
-
-    async function fetchItems() {
-      const res = await fetch('/api/items');
-      itemsList = await res.json();
-      const select = document.getElementById('itemId');
-      select.innerHTML = '';
-      itemsList.forEach(item => {
-        const option = document.createElement('option');
-        option.value = item.id;
-        option.textContent = `${item.name} (${item.category}) - Stock: ${item.quantity}`;
-        select.appendChild(option);
-      });
-    }
-
-    function addToCart() {
-      const itemId = parseInt(document.getElementById('itemId').value);
-      const quantitySold = parseInt(document.getElementById('quantitySold').value);
-      if (!itemId || !quantitySold || quantitySold < 1) {
-        alert('Please select a valid item and quantity.');
-        return;
+      async function fetchItems() {
+        const res = await fetch("/api/items");
+        itemsList = await res.json();
+        const select = document.getElementById("itemId");
+        select.innerHTML = "";
+        itemsList.forEach((item) => {
+          const option = document.createElement("option");
+          option.value = item.id;
+          option.textContent = `${item.name} (${item.category}) - Stock: ${item.quantity}`;
+          select.appendChild(option);
+        });
       }
 
-      const item = itemsList.find(i => i.id === itemId);
-      if (!item) {
-        alert('Invalid item selected.');
-        return;
-      }
-
-      if (quantitySold > item.quantity) {
-        alert(`Cannot add ${quantitySold} units. Only ${item.quantity} in stock.`);
-        return;
-      }
-
-      const cartItem = cart.find(c => c.itemId === itemId);
-      if (cartItem) {
-        if (cartItem.quantitySold + quantitySold > item.quantity) {
-          alert(`Total quantity for this item in cart exceeds stock.`);
+      function addToCart() {
+        const itemId = parseInt(document.getElementById("itemId").value);
+        const quantitySold = parseInt(
+          document.getElementById("quantitySold").value
+        );
+        if (!itemId || !quantitySold || quantitySold < 1) {
+          alert("Please select a valid item and quantity.");
           return;
         }
-        cartItem.quantitySold += quantitySold;
-      } else {
-        cart.push({ itemId, itemName: item.name, quantitySold });
+
+        const item = itemsList.find((i) => i.id === itemId);
+        if (!item) {
+          alert("Invalid item selected.");
+          return;
+        }
+
+        if (quantitySold > item.quantity) {
+          alert(
+            `Cannot add ${quantitySold} units. Only ${item.quantity} in stock.`
+          );
+          return;
+        }
+
+        const cartItem = cart.find((c) => c.itemId === itemId);
+        if (cartItem) {
+          if (cartItem.quantitySold + quantitySold > item.quantity) {
+            alert(`Total quantity for this item in cart exceeds stock.`);
+            return;
+          }
+          cartItem.quantitySold += quantitySold;
+        } else {
+          cart.push({ itemId, itemName: item.name, quantitySold });
+        }
+
+        renderCart();
       }
 
-      renderCart();
-    }
-
-    function renderCart() {
-      const tbody = document.querySelector('#cartTable tbody');
-      tbody.innerHTML = '';
-      cart.forEach((cartItem, index) => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
+      function renderCart() {
+        const tbody = document.querySelector("#cartTable tbody");
+        tbody.innerHTML = "";
+        cart.forEach((cartItem, index) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
           <td>${cartItem.itemName}</td>
           <td>${cartItem.quantitySold}</td>
           <td><span class="remove-btn" data-index="${index}">Remove</span></td>
         `;
-        tbody.appendChild(tr);
-      });
-
-      document.querySelectorAll('.remove-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          const index = e.target.getAttribute('data-index');
-          cart.splice(index, 1);
-          renderCart();
+          tbody.appendChild(tr);
         });
-      });
-    }
 
-    async function fetchSalesHistory() {
-      const res = await fetch('/api/sales-history');
-      const sales = await res.json();
-      const tbody = document.querySelector('#salesTable tbody');
-      tbody.innerHTML = '';
+        document.querySelectorAll(".remove-btn").forEach((btn) => {
+          btn.addEventListener("click", (e) => {
+            const index = e.target.getAttribute("data-index");
+            cart.splice(index, 1);
+            renderCart();
+          });
+        });
+      }
 
-      sales.sort((a, b) => new Date(b.date) - new Date(a.date));
+      async function fetchSalesHistory() {
+        const res = await fetch("/api/sales-history");
+        const sales = await res.json();
+        const tbody = document.querySelector("#salesTable tbody");
+        tbody.innerHTML = "";
 
-      sales.forEach(sale => {
-        tbody.innerHTML += `
+        sales.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        sales.forEach((sale) => {
+          tbody.innerHTML += `
           <tr>
             <td>${sale.Item.name}</td>
             <td>${sale.Item.category}</td>
@@ -147,55 +166,59 @@
             <td>${sale.quantitySold}</td>
           </tr>
         `;
-      });
-    }
-
-    async function submitTransaction(e) {
-      e.preventDefault();
-
-      if (cart.length === 0) {
-        alert('Add at least one item to the transaction.');
-        return;
+        });
       }
 
-      const transactionId = 'TX' + Date.now();
-      const today = new Date();
-      const date = today.toISOString().split('T')[0];
+      async function submitTransaction(e) {
+        e.preventDefault();
 
-      for (const cartItem of cart) {
-        const res = await fetch('/api/sales-history', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            itemId: cartItem.itemId,
-            date,
-            quantitySold: cartItem.quantitySold,
-            transactionId
-          })
-        });
-
-        if (!res.ok) {
-          const error = await res.json();
-          alert('Error adding sale: ' + error.error);
+        if (cart.length === 0) {
+          alert("Add at least one item to the transaction.");
           return;
         }
+
+        const transactionId = "TX" + Date.now();
+        const today = new Date();
+        const date = today.toISOString().split("T")[0];
+
+        for (const cartItem of cart) {
+          const res = await fetch("/api/sales-history", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              itemId: cartItem.itemId,
+              date,
+              quantitySold: cartItem.quantitySold,
+              transactionId,
+            }),
+          });
+
+          if (!res.ok) {
+            const error = await res.json();
+            alert("Error adding sale: " + error.error);
+            return;
+          }
+        }
+
+        alert("Transaction recorded successfully!");
+
+        cart = [];
+        renderCart();
+        document.getElementById("transactionForm").reset();
+
+        fetchItems();
+        fetchSalesHistory();
       }
 
-      alert('Transaction recorded successfully!');
-
-      cart = [];
-      renderCart();
-      document.getElementById('transactionForm').reset();
+      document
+        .getElementById("addToCartBtn")
+        .addEventListener("click", addToCart);
+      document
+        .getElementById("transactionForm")
+        .addEventListener("submit", submitTransaction);
 
       fetchItems();
       fetchSalesHistory();
-    }
-
-    document.getElementById('addToCartBtn').addEventListener('click', addToCart);
-    document.getElementById('transactionForm').addEventListener('submit', submitTransaction);
-
-    fetchItems();
-    fetchSalesHistory();
-  </script>
-</body>
+    </script>
+  </body>
 </html>

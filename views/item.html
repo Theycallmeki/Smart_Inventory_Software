@@ -1,171 +1,217 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Item Management</title>
-  <link rel="stylesheet" href="item.css" />
-</head>
-<body>
-  <h1>Items</h1>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Item Management</title>
+    <link rel="stylesheet" href="item.css" />
+  </head>
+  <body>
+    <header class="fixed-header">
+      <a href="/">Home</a>
+      <a href="/item"> Items</a>
+      <a href="/admin"> Admin Panel</a>
+      <a href="/sales-history"> Sales History</a>
+      <a href="/prediction"> Prediction</a>
+    </header>
 
-  <input type="text" id="searchInput" placeholder="Search by name..." />
+    <div class="page-content">
+      <h1>Items</h1>
 
-  <table id="itemTable">
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Name</th>
-        <th>Category</th>
-        <th>Quantity</th>
-        <th>Price</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+      <input type="text" id="searchInput" placeholder="Search by name..." />
 
-  <h2>Add New Item</h2>
-  <form id="itemForm">
-    <div class="form-group">
-      <label>Name:</label>
-      <input type="text" id="name" required />
-    </div>
-    <div class="form-group">
-      <label>Quantity:</label>
-      <input type="number" id="quantity" required />
-    </div>
-    <div class="form-group">
-      <label>Price:</label>
-      <input type="number" id="price" step="0.01" required />
-    </div>
-    <div class="form-group">
-      <label>Category:</label>
-      <select id="category" required>
-        <option value="">Select category</option>
-        <option value="Fruits">Fruits</option>
-        <option value="Vegetables">Vegetables</option>
-        <option value="Meat">Meat</option>
-        <option value="Seafood">Seafood</option>
-        <option value="Dairy">Dairy</option>
-        <option value="Beverages">Beverages</option>
-        <option value="Snacks">Snacks</option>
-        <option value="Bakery">Bakery</option>
-        <option value="Frozen">Frozen</option>
-        <option value="Canned Goods">Canned Goods</option>
-        <option value="Condiments">Condiments</option>
-        <option value="Dry Goods">Dry Goods</option>
-        <option value="Grains &amp; Pasta">Grains &amp; Pasta</option>
-        <option value="Spices &amp; Seasonings">Spices &amp; Seasonings</option>
-        <option value="Breakfast &amp; Cereal">Breakfast &amp; Cereal</option>
-        <option value="Personal Care">Personal Care</option>
-        <option value="Household">Household</option>
-        <option value="Baby Products">Baby Products</option>
-        <option value="Pet Supplies">Pet Supplies</option>
-        <option value="Health &amp; Wellness">Health &amp; Wellness</option>
-        <option value="Cleaning Supplies">Cleaning Supplies</option>
-      </select>
-    </div>
-    <button type="submit">Create Item</button>
-  </form>
+      <table id="itemTable">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Category</th>
+            <th>Quantity</th>
+            <th>Price</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
 
-  <script>
-    async function fetchItems() {
-      const res = await fetch('/api/items');
-      const items = await res.json();
-      const tbody = document.querySelector('#itemTable tbody');
-      tbody.innerHTML = '';
-      items.forEach(item => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
+      <h2>Add New Item</h2>
+      <form id="itemForm">
+        <div class="form-group">
+          <label>Name:</label>
+          <input type="text" id="name" required />
+        </div>
+        <div class="form-group">
+          <label>Quantity:</label>
+          <input type="number" id="quantity" required />
+        </div>
+        <div class="form-group">
+          <label>Price:</label>
+          <input type="number" id="price" step="0.01" required />
+        </div>
+        <div class="form-group">
+          <label>Category:</label>
+          <select id="category" required>
+            <option value="">Select category</option>
+            <option value="Fruits">Fruits</option>
+            <option value="Vegetables">Vegetables</option>
+            <option value="Meat">Meat</option>
+            <option value="Seafood">Seafood</option>
+            <option value="Dairy">Dairy</option>
+            <option value="Beverages">Beverages</option>
+            <option value="Snacks">Snacks</option>
+            <option value="Bakery">Bakery</option>
+            <option value="Frozen">Frozen</option>
+            <option value="Canned Goods">Canned Goods</option>
+            <option value="Condiments">Condiments</option>
+            <option value="Dry Goods">Dry Goods</option>
+            <option value="Grains &amp; Pasta">Grains &amp; Pasta</option>
+            <option value="Spices &amp; Seasonings">
+              Spices &amp; Seasonings
+            </option>
+            <option value="Breakfast &amp; Cereal">
+              Breakfast &amp; Cereal
+            </option>
+            <option value="Personal Care">Personal Care</option>
+            <option value="Household">Household</option>
+            <option value="Baby Products">Baby Products</option>
+            <option value="Pet Supplies">Pet Supplies</option>
+            <option value="Health &amp; Wellness">Health &amp; Wellness</option>
+            <option value="Cleaning Supplies">Cleaning Supplies</option>
+          </select>
+        </div>
+        <button type="submit">Create Item</button>
+      </form>
+
+      <script>
+        async function fetchItems() {
+          const res = await fetch("/api/items");
+          const items = await res.json();
+          const tbody = document.querySelector("#itemTable tbody");
+          tbody.innerHTML = "";
+          items.forEach((item) => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
           <td><strong>${item.id}</strong></td>
-          <td><input value="${item.name}" data-id="${item.id}" class="edit-name" /></td>
+          <td><input value="${item.name}" data-id="${
+              item.id
+            }" class="edit-name" /></td>
           <td>
             <select data-id="${item.id}" class="edit-category">
-              ${[...document.querySelectorAll('#category option')]
-                .map(opt => `<option value="${opt.value}" ${opt.value === item.category ? 'selected' : ''}>${opt.textContent}</option>`).join('')}
+              ${[...document.querySelectorAll("#category option")]
+                .map(
+                  (opt) =>
+                    `<option value="${opt.value}" ${
+                      opt.value === item.category ? "selected" : ""
+                    }>${opt.textContent}</option>`
+                )
+                .join("")}
             </select>
           </td>
-          <td><input type="number" value="${item.quantity}" data-id="${item.id}" class="edit-quantity" /></td>
-          <td><input type="number" step="0.01" value="${item.price}" data-id="${item.id}" class="edit-price" /></td>
+          <td><input type="number" value="${item.quantity}" data-id="${
+              item.id
+            }" class="edit-quantity" /></td>
+          <td><input type="number" step="0.01" value="${item.price}" data-id="${
+              item.id
+            }" class="edit-price" /></td>
           <td>
             <button onclick="updateItem(${item.id})">Save</button>
-            <button class="delete-btn" onclick="deleteItem(${item.id})">Delete</button>
+            <button class="delete-btn" onclick="deleteItem(${
+              item.id
+            })">Delete</button>
           </td>
         `;
-        tbody.appendChild(row);
-      });
-    }
+            tbody.appendChild(row);
+          });
+        }
 
-    async function createItem(e) {
-      e.preventDefault();
-      const name = document.getElementById('name').value.trim();
-      const quantity = parseInt(document.getElementById('quantity').value, 10);
-      const price = parseFloat(document.getElementById('price').value);
-      const category = document.getElementById('category').value;
+        async function createItem(e) {
+          e.preventDefault();
+          const name = document.getElementById("name").value.trim();
+          const quantity = parseInt(
+            document.getElementById("quantity").value,
+            10
+          );
+          const price = parseFloat(document.getElementById("price").value);
+          const category = document.getElementById("category").value;
 
-      if (!category) {
-        alert('Please select a valid category.');
-        return;
-      }
+          if (!category) {
+            alert("Please select a valid category.");
+            return;
+          }
 
-      const res = await fetch('/api/items', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, quantity, price, category })
-      });
+          const res = await fetch("/api/items", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, quantity, price, category }),
+          });
 
-      const data = await res.json();
-      if (res.ok) {
-        document.getElementById('itemForm').reset();
+          const data = await res.json();
+          if (res.ok) {
+            document.getElementById("itemForm").reset();
+            fetchItems();
+          } else {
+            alert(data.error || "Error adding item");
+          }
+        }
+
+        async function updateItem(id) {
+          const name = document
+            .querySelector(`.edit-name[data-id="${id}"]`)
+            .value.trim();
+          const quantity = parseInt(
+            document.querySelector(`.edit-quantity[data-id="${id}"]`).value,
+            10
+          );
+          const price = parseFloat(
+            document.querySelector(`.edit-price[data-id="${id}"]`).value
+          );
+          const category = document.querySelector(
+            `.edit-category[data-id="${id}"]`
+          ).value;
+
+          const res = await fetch(`/api/items/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, quantity, price, category }),
+          });
+
+          const data = await res.json();
+          if (!res.ok) {
+            alert(data.error || "Error updating item");
+          } else {
+            fetchItems();
+          }
+        }
+
+        async function deleteItem(id) {
+          if (!confirm("Are you sure you want to delete this item?")) return;
+          const res = await fetch(`/api/items/${id}`, { method: "DELETE" });
+          const data = await res.json();
+          if (!res.ok) {
+            alert(data.error || "Error deleting item");
+          } else {
+            fetchItems();
+          }
+        }
+
+        document
+          .getElementById("searchInput")
+          .addEventListener("input", function () {
+            const filter = this.value.toLowerCase();
+            const rows = document.querySelectorAll("#itemTable tbody tr");
+            rows.forEach((row) => {
+              const name = row.children[1]
+                .querySelector("input")
+                .value.toLowerCase();
+              row.style.display = name.includes(filter) ? "" : "none";
+            });
+          });
+
+        document
+          .getElementById("itemForm")
+          .addEventListener("submit", createItem);
+
         fetchItems();
-      } else {
-        alert(data.error || 'Error adding item');
-      }
-    }
-
-    async function updateItem(id) {
-      const name = document.querySelector(`.edit-name[data-id="${id}"]`).value.trim();
-      const quantity = parseInt(document.querySelector(`.edit-quantity[data-id="${id}"]`).value, 10);
-      const price = parseFloat(document.querySelector(`.edit-price[data-id="${id}"]`).value);
-      const category = document.querySelector(`.edit-category[data-id="${id}"]`).value;
-
-      const res = await fetch(`/api/items/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, quantity, price, category })
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        alert(data.error || 'Error updating item');
-      } else {
-        fetchItems();
-      }
-    }
-
-    async function deleteItem(id) {
-      if (!confirm('Are you sure you want to delete this item?')) return;
-      const res = await fetch(`/api/items/${id}`, { method: 'DELETE' });
-      const data = await res.json();
-      if (!res.ok) {
-        alert(data.error || 'Error deleting item');
-      } else {
-        fetchItems();
-      }
-    }
-
-    document.getElementById('searchInput').addEventListener('input', function () {
-      const filter = this.value.toLowerCase();
-      const rows = document.querySelectorAll('#itemTable tbody tr');
-      rows.forEach(row => {
-        const name = row.children[1].querySelector('input').value.toLowerCase();
-        row.style.display = name.includes(filter) ? '' : 'none';
-      });
-    });
-
-    document.getElementById('itemForm').addEventListener('submit', createItem);
-
-    fetchItems();
-  </script>
-</body>
+      </script>
+    </div>
+  </body>
 </html>

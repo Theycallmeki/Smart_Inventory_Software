@@ -1,6 +1,37 @@
+/* Fixed header styles */
+.fixed-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: #000dff;
+  padding: 10px 20px;
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  box-sizing: border-box;
+  z-index: 1000;
+}
+
+.fixed-header a {
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.3s ease;
+}
+
+.fixed-header a:hover {
+  color: #aabaff;
+}
+
+/* Add top padding to container so content isn't hidden behind fixed header */
+.container {
+  padding-top: 60px; /* Adjust this value if your header height changes */
+}
+
 /* public/admin.css */
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   background: linear-gradient(135deg, #6b73ff 0%, #000dff 100%);
   color: #fff;
   margin: 0;
@@ -67,7 +98,8 @@ table {
   overflow: hidden;
 }
 
-th, td {
+th,
+td {
   border: 1px solid rgba(255, 255, 255, 0.2);
   padding: 12px 8px;
   text-align: left;
@@ -136,7 +168,8 @@ tr:hover td {
     min-width: 400px;
   }
 
-  th, td {
+  th,
+  td {
     padding: 8px 6px;
   }
 
@@ -160,7 +193,8 @@ tr:hover td {
     font-size: 1.2rem;
   }
 
-  .table-container, .chart-container {
+  .table-container,
+  .chart-container {
     padding: 10px;
   }
 
@@ -169,7 +203,8 @@ tr:hover td {
     min-width: 350px;
   }
 
-  th, td {
+  th,
+  td {
     padding: 6px 4px;
   }
 
