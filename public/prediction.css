@@ -1,0 +1,112 @@
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #6b73ff 0%, #000dff 100%);
+  color: #fff;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.container {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 30px 40px 40px 40px;
+  border-radius: 15px;
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+  backdrop-filter: blur(8.5px);
+  -webkit-backdrop-filter: blur(8.5px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  max-width: 700px;
+  width: 100%;
+  text-align: left;
+}
+
+h1 {
+  margin-bottom: 30px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  font-size: 1.8rem;
+  text-align: center;
+}
+
+/* Container for each label+select/input combo */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 20px;
+  color: #fff;
+}
+
+label {
+  margin-bottom: 6px;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+select {
+  padding: 8px 12px;
+  font-size: 1rem;
+  border-radius: 8px;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  font-weight: 600;
+  color: #000dff;
+  background-color: #fff;
+  box-shadow: 0 4px 10px rgba(0, 13, 255, 0.3);
+  transition: box-shadow 0.3s ease;
+}
+
+select:hover,
+select:focus {
+  box-shadow: 0 6px 15px rgba(0, 13, 255, 0.5);
+}
+
+input#itemSearch {
+  padding: 8px 12px;
+  font-size: 1rem;
+  border-radius: 8px;
+  border: none;
+  outline: none;
+  font-weight: 600;
+  color: #000dff;
+  background-color: #fff;
+  box-shadow: 0 4px 10px rgba(0, 13, 255, 0.3);
+  transition: box-shadow 0.3s ease;
+}
+
+input#itemSearch::placeholder {
+  color: #000dff99;
+  font-weight: 400;
+}
+
+input#itemSearch:hover,
+input#itemSearch:focus {
+  box-shadow: 0 6px 15px rgba(0, 13, 255, 0.5);
+}
+
+.chart-container {
+  margin: 30px 0;
+}
+
+.prediction-box {
+  padding: 15px 20px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.15);
+  font-weight: 600;
+  font-size: 1.1rem;
+  box-shadow: 0 6px 15px rgba(0, 13, 255, 0.3);
+  color: #fff;
+  min-height: 60px;
+  user-select: none;
+  text-align: center;
+}
+
+#salesChart {
+  background-color: rgba(255, 255, 255, 0.85);
+  border-radius: 15px;
+  padding: 20px;
+}

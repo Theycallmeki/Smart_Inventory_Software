@@ -4,200 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Sales History</title>
-  <style>
-    /* Beautiful glassmorphism theme */
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #6b73ff 0%, #000dff 100%);
-      color: #fff;
-      margin: 0;
-      padding: 20px;
-      min-height: 100vh;
-    }
-
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    .glass-card {
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 15px;
-      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-      backdrop-filter: blur(8.5px);
-      -webkit-backdrop-filter: blur(8.5px);
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      padding: 30px;
-      margin-bottom: 30px;
-    }
-
-    h1 {
-      text-align: center;
-      margin-bottom: 30px;
-      font-weight: 700;
-      letter-spacing: 2px;
-      font-size: 2.5em;
-    }
-
-    h2, h3 {
-      font-weight: 600;
-      margin-bottom: 20px;
-      color: #fff;
-    }
-
-    /* Form styling */
-    .form-row {
-      display: flex;
-      align-items: center;
-      margin-bottom: 15px;
-      flex-wrap: wrap;
-      gap: 15px;
-    }
-
-    label {
-      font-weight: 600;
-      color: #fff;
-      min-width: 120px;
-    }
-
-    select, input[type="number"], input[type="text"] {
-      padding: 12px 15px;
-      border: none;
-      border-radius: 25px;
-      background: rgba(255, 255, 255, 0.2);
-      color: #fff;
-      backdrop-filter: blur(5px);
-      min-width: 200px;
-      font-size: 14px;
-    }
-
-    select::placeholder, input::placeholder {
-      color: rgba(255, 255, 255, 0.7);
-    }
-
-    select:focus, input:focus {
-      outline: none;
-      background: rgba(255, 255, 255, 0.3);
-      box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
-    }
-
-    select option {
-      background: #000dff;
-      color: #fff;
-    }
-
-    button {
-      padding: 12px 25px;
-      border: none;
-      border-radius: 25px;
-      background: #fff;
-      color: #000dff;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 5px 15px rgba(0, 13, 255, 0.4);
-    }
-
-    button:hover {
-      background: #000dff;
-      color: #fff;
-      box-shadow: 0 5px 15px rgba(255, 255, 255, 0.6);
-      transform: translateY(-2px);
-    }
-
-    /* Table styling */
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 15px;
-      overflow: hidden;
-      backdrop-filter: blur(5px);
-    }
-
-    th {
-      background: rgba(255, 255, 255, 0.2);
-      color: #fff;
-      padding: 15px;
-      text-align: left;
-      font-weight: 600;
-      border-bottom: 2px solid rgba(255, 255, 255, 0.1);
-    }
-
-    td {
-      padding: 12px 15px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      color: #fff;
-    }
-
-    tr:hover {
-      background: rgba(255, 255, 255, 0.1);
-    }
-
-    /* Cart table specific styling */
-    #cartTable {
-      margin-top: 20px;
-      background: rgba(255, 255, 255, 0.08);
-    }
-
-    #cartTable th {
-      text-align: center;
-      background: rgba(255, 255, 255, 0.15);
-    }
-
-    #cartTable td {
-      text-align: center;
-    }
-
-    .remove-btn {
-      cursor: pointer;
-      color: #ff6b6b;
-      font-weight: 600;
-      padding: 5px 10px;
-      border-radius: 15px;
-      background: rgba(255, 107, 107, 0.2);
-      transition: all 0.3s ease;
-    }
-
-    .remove-btn:hover {
-      background: rgba(255, 107, 107, 0.4);
-      transform: scale(1.05);
-    }
-
-    /* Responsive design */
-    @media (max-width: 768px) {
-      .container {
-        padding: 10px;
-      }
-      
-      .glass-card {
-        padding: 20px;
-      }
-      
-      .form-row {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-      
-      select, input[type="number"], input[type="text"] {
-        width: 100%;
-        min-width: unset;
-      }
-      
-      table {
-        font-size: 14px;
-      }
-      
-      th, td {
-        padding: 8px;
-      }
-    }
-
-    /* Animation for smooth transitions */
-    * {
-      transition: all 0.3s ease;
-    }
-  </style>
+  <link rel="stylesheet" href="/salesHistory.css" />
 </head>
 <body>
   <div class="container">
@@ -250,145 +57,145 @@
     </div>
   </div>
 
-<script>
-  let itemsList = [];
-  let cart = [];
+  <script>
+    let itemsList = [];
+    let cart = [];
 
-  async function fetchItems() {
-    const res = await fetch('/items');
-    itemsList = await res.json();
-    const select = document.getElementById('itemId');
-    select.innerHTML = '';
-    itemsList.forEach(item => {
-      const option = document.createElement('option');
-      option.value = item.id;
-      option.textContent = `${item.name} (${item.category}) - Stock: ${item.quantity}`;
-      select.appendChild(option);
-    });
-  }
-
-  function addToCart() {
-    const itemId = parseInt(document.getElementById('itemId').value);
-    const quantitySold = parseInt(document.getElementById('quantitySold').value);
-    if (!itemId || !quantitySold || quantitySold < 1) {
-      alert('Please select a valid item and quantity.');
-      return;
+    async function fetchItems() {
+      const res = await fetch('/api/items');
+      itemsList = await res.json();
+      const select = document.getElementById('itemId');
+      select.innerHTML = '';
+      itemsList.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item.id;
+        option.textContent = `${item.name} (${item.category}) - Stock: ${item.quantity}`;
+        select.appendChild(option);
+      });
     }
 
-    const item = itemsList.find(i => i.id === itemId);
-    if (!item) {
-      alert('Invalid item selected.');
-      return;
-    }
-
-    if (quantitySold > item.quantity) {
-      alert(`Cannot add ${quantitySold} units. Only ${item.quantity} in stock.`);
-      return;
-    }
-
-    const cartItem = cart.find(c => c.itemId === itemId);
-    if (cartItem) {
-      if (cartItem.quantitySold + quantitySold > item.quantity) {
-        alert(`Total quantity for this item in cart exceeds stock.`);
+    function addToCart() {
+      const itemId = parseInt(document.getElementById('itemId').value);
+      const quantitySold = parseInt(document.getElementById('quantitySold').value);
+      if (!itemId || !quantitySold || quantitySold < 1) {
+        alert('Please select a valid item and quantity.');
         return;
       }
-      cartItem.quantitySold += quantitySold;
-    } else {
-      cart.push({ itemId, itemName: item.name, quantitySold });
-    }
 
-    renderCart();
-  }
-
-  function renderCart() {
-    const tbody = document.querySelector('#cartTable tbody');
-    tbody.innerHTML = '';
-    cart.forEach((cartItem, index) => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${cartItem.itemName}</td>
-        <td>${cartItem.quantitySold}</td>
-        <td><span class="remove-btn" data-index="${index}">Remove</span></td>
-      `;
-      tbody.appendChild(tr);
-    });
-
-    document.querySelectorAll('.remove-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const index = e.target.getAttribute('data-index');
-        cart.splice(index, 1);
-        renderCart();
-      });
-    });
-  }
-
-  async function fetchSalesHistory() {
-    const res = await fetch('/api/sales-history');
-    const sales = await res.json();
-    const tbody = document.querySelector('#salesTable tbody');
-    tbody.innerHTML = '';
-
-    sales.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-    sales.forEach(sale => {
-      tbody.innerHTML += `
-        <tr>
-          <td>${sale.Item.name}</td>
-          <td>${sale.Item.category}</td>
-          <td>${sale.Item.price}</td>
-          <td>${sale.date}</td>
-          <td>${sale.quantitySold}</td>
-        </tr>
-      `;
-    });
-  }
-
-  async function submitTransaction(e) {
-    e.preventDefault();
-
-    if (cart.length === 0) {
-      alert('Add at least one item to the transaction.');
-      return;
-    }
-
-    const transactionId = 'TX' + Date.now();
-    const today = new Date();
-    const date = today.toISOString().split('T')[0];
-
-    for (const cartItem of cart) {
-      const res = await fetch('/api/sales-history', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          itemId: cartItem.itemId,
-          date,
-          quantitySold: cartItem.quantitySold,
-          transactionId
-        })
-      });
-
-      if (!res.ok) {
-        const error = await res.json();
-        alert('Error adding sale: ' + error.error);
+      const item = itemsList.find(i => i.id === itemId);
+      if (!item) {
+        alert('Invalid item selected.');
         return;
       }
+
+      if (quantitySold > item.quantity) {
+        alert(`Cannot add ${quantitySold} units. Only ${item.quantity} in stock.`);
+        return;
+      }
+
+      const cartItem = cart.find(c => c.itemId === itemId);
+      if (cartItem) {
+        if (cartItem.quantitySold + quantitySold > item.quantity) {
+          alert(`Total quantity for this item in cart exceeds stock.`);
+          return;
+        }
+        cartItem.quantitySold += quantitySold;
+      } else {
+        cart.push({ itemId, itemName: item.name, quantitySold });
+      }
+
+      renderCart();
     }
 
-    alert('Transaction recorded successfully!');
+    function renderCart() {
+      const tbody = document.querySelector('#cartTable tbody');
+      tbody.innerHTML = '';
+      cart.forEach((cartItem, index) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${cartItem.itemName}</td>
+          <td>${cartItem.quantitySold}</td>
+          <td><span class="remove-btn" data-index="${index}">Remove</span></td>
+        `;
+        tbody.appendChild(tr);
+      });
 
-    cart = [];
-    renderCart();
-    document.getElementById('transactionForm').reset();
+      document.querySelectorAll('.remove-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const index = e.target.getAttribute('data-index');
+          cart.splice(index, 1);
+          renderCart();
+        });
+      });
+    }
+
+    async function fetchSalesHistory() {
+      const res = await fetch('/api/sales-history');
+      const sales = await res.json();
+      const tbody = document.querySelector('#salesTable tbody');
+      tbody.innerHTML = '';
+
+      sales.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      sales.forEach(sale => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${sale.Item.name}</td>
+            <td>${sale.Item.category}</td>
+            <td>${sale.Item.price}</td>
+            <td>${sale.date}</td>
+            <td>${sale.quantitySold}</td>
+          </tr>
+        `;
+      });
+    }
+
+    async function submitTransaction(e) {
+      e.preventDefault();
+
+      if (cart.length === 0) {
+        alert('Add at least one item to the transaction.');
+        return;
+      }
+
+      const transactionId = 'TX' + Date.now();
+      const today = new Date();
+      const date = today.toISOString().split('T')[0];
+
+      for (const cartItem of cart) {
+        const res = await fetch('/api/sales-history', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            itemId: cartItem.itemId,
+            date,
+            quantitySold: cartItem.quantitySold,
+            transactionId
+          })
+        });
+
+        if (!res.ok) {
+          const error = await res.json();
+          alert('Error adding sale: ' + error.error);
+          return;
+        }
+      }
+
+      alert('Transaction recorded successfully!');
+
+      cart = [];
+      renderCart();
+      document.getElementById('transactionForm').reset();
+
+      fetchItems();
+      fetchSalesHistory();
+    }
+
+    document.getElementById('addToCartBtn').addEventListener('click', addToCart);
+    document.getElementById('transactionForm').addEventListener('submit', submitTransaction);
 
     fetchItems();
     fetchSalesHistory();
-  }
-
-  document.getElementById('addToCartBtn').addEventListener('click', addToCart);
-  document.getElementById('transactionForm').addEventListener('submit', submitTransaction);
-
-  fetchItems();
-  fetchSalesHistory();
-</script>
+  </script>
 </body>
 </html>
