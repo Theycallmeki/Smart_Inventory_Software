@@ -1,4 +1,4 @@
-/* Fixed header styles */
+/* Fixed header */
 .fixed-header {
   position: fixed;
   top: 0;
@@ -9,7 +9,6 @@
   display: flex;
   gap: 20px;
   align-items: center;
-  box-sizing: border-box;
   z-index: 1000;
 }
 
@@ -24,15 +23,10 @@
   color: #aabaff;
 }
 
-/* Add top padding to container so content isn't hidden behind fixed header */
-.container {
-  padding-top: 60px; /* Adjust this value if your header height changes */
-}
-
-/* public/admin.css */
+/* Global layout */
 body {
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(135deg, #6b73ff 0%, #000dff 100%);
+  background: linear-gradient(135deg, #6b73ff, #000dff);
   color: #fff;
   margin: 0;
   padding: 20px;
@@ -44,208 +38,78 @@ body {
   margin: 0 auto;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 15px;
-  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-  backdrop-filter: blur(8.5px);
-  -webkit-backdrop-filter: blur(8.5px);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+  backdrop-filter: blur(8px);
   padding: 30px;
 }
 
-h1 {
+h1, h2 {
   text-align: center;
-  margin-bottom: 30px;
-  font-weight: 700;
-  letter-spacing: 2px;
-  font-size: 2.5rem;
-}
-
-h2 {
-  font-weight: 600;
   margin-bottom: 20px;
-  font-size: 1.5rem;
+  font-weight: 700;
 }
 
-.container {
+/* Chart and Table layout */
+.flex-chart-section {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  gap: 30px;
+  gap: 2rem;
+  flex-wrap: wrap;
 }
 
-.table-container {
+.chart-box, .table-box {
   flex: 1;
   min-width: 300px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 10px;
-  padding: 20px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-}
-
-.chart-container {
-  flex: 0 0 350px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 10px;
-  padding: 20px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  text-align: center;
-}
-
-table {
-  border-collapse: collapse;
-  width: 100%;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-th,
-td {
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 12px 8px;
-  text-align: left;
-}
-
-th {
-  background: rgba(255, 255, 255, 0.2);
-  font-weight: 600;
-  color: #fff;
-}
-
-td {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-tr:hover td {
-  background: rgba(255, 255, 255, 0.1);
 }
 
 #categoryChart {
   width: 100% !important;
   max-width: 300px !important;
   height: 300px !important;
-  margin: 0 auto;
+  margin: auto;
 }
 
-/* Mobile Responsive Styles */
-@media (max-width: 768px) {
-  body {
-    padding: 10px;
-  }
-
-  .main-container {
-    padding: 20px;
-  }
-
-  h1 {
-    font-size: 2rem;
-    margin-bottom: 20px;
-  }
-
-  h2 {
-    font-size: 1.3rem;
-    text-align: center;
-  }
-
-  .container {
-    flex-direction: column;
-    gap: 20px;
-  }
-
-  .table-container {
-    width: 100%;
-    padding: 15px;
-    overflow-x: auto;
-  }
-
-  .chart-container {
-    flex: none;
-    width: 100%;
-    padding: 15px;
-  }
-
-  table {
-    font-size: 0.9rem;
-    min-width: 400px;
-  }
-
-  th,
-  td {
-    padding: 8px 6px;
-  }
-
-  #categoryChart {
-    width: 100% !important;
-    max-width: 280px !important;
-    height: 280px !important;
-  }
+#toggleTableBtn {
+  margin-bottom: 1rem;
 }
 
-@media (max-width: 480px) {
-  .main-container {
-    padding: 15px;
-  }
-
-  h1 {
-    font-size: 1.8rem;
-  }
-
-  h2 {
-    font-size: 1.2rem;
-  }
-
-  .table-container,
-  .chart-container {
-    padding: 10px;
-  }
-
-  table {
-    font-size: 0.8rem;
-    min-width: 350px;
-  }
-
-  th,
-  td {
-    padding: 6px 4px;
-  }
-
-  #categoryChart {
-    max-width: 250px !important;
-    height: 250px !important;
-  }
+#categoryTableWrapper {
+  display: none;
+  margin-top: 1rem;
 }
 
-/* Scrollbar styling for webkit browsers */
-.table-container::-webkit-scrollbar {
-  height: 8px;
-}
-
-.table-container::-webkit-scrollbar-track {
+#categoryTable {
+  width: 100%;
+  border-collapse: collapse;
   background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
-.table-container::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 4px;
+#categoryTable th,
+#categoryTable td {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 12px 8px;
+  text-align: left;
 }
 
-.table-container::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.5);
+#categoryTable tr:hover td {
+  background: rgba(255, 255, 255, 0.1);
 }
 
-/* Loading state */
-.loading {
-  text-align: center;
-  padding: 20px;
-  color: rgba(255, 255, 255, 0.7);
-}
-
-/* Error state */
+/* States */
+.loading,
 .error {
   text-align: center;
   padding: 20px;
+  border-radius: 8px;
+}
+
+.loading {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.error {
   color: #ff6b6b;
   background: rgba(255, 107, 107, 0.1);
-  border-radius: 8px;
-  margin: 10px 0;
 }

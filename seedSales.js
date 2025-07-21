@@ -1,41 +1,76 @@
+// seedSales.js
 const sequelize = require('./db');
-const SalesHistory = require('./models/salesHistory');
+const Item = require('./models/item');
+const SalesHistory = require('./models/SalesHistory');
 
-async function seedDummySales() {
+const categories = [
+  'Fruits', 'Vegetables', 'Meat', 'Seafood', 'Dairy', 'Beverages',
+  'Snacks', 'Bakery', 'Frozen', 'Canned Goods', 'Condiments',
+  'Dry Goods', 'Grains & Pasta', 'Spices & Seasonings',
+  'Breakfast & Cereal', 'Personal Care', 'Household', 'Baby Products',
+  'Pet Supplies', 'Health & Wellness', 'Cleaning Supplies'
+];
+
+// Generate random category from list
+function getRandomCategory() {
+  return categories[Math.floor(Math.random() * categories.length)];
+}
+
+// Generate random price between 0.5 and 100
+function getRandomPrice() {
+  return (Math.random() * 99.5 + 0.5).toFixed(2);
+}
+
+// Generate a random item name for simplicity
+function getRandomItemName(index) {
+  return `Item-${index + 1}`;
+}
+
+// Generate dummy barcode - simple incremental string
+function getBarcode(index) {
+  return (1000000000 + index).toString();
+}
+
+async function seed() {
   try {
-    await sequelize.sync();
+    await sequelize.sync({ force: true }); // reset tables
 
-    // Use all available itemIds except 2
-    const itemIds = [
-      5,6,7
-    ];
+    // Create 50 items
+    const itemsData = [];
+    for (let i = 0; i < 50; i++) {
+      itemsData.push({
+        name: getRandomItemName(i),
+        quantity: Math.floor(Math.random() * 100) + 10,
+        category: getRandomCategory(),
+        price: getRandomPrice(),
+        barcode: getBarcode(i),
+      });
+    }
+    const items = await Item.bulkCreate(itemsData);
+    console.log('50 dummy items created.');
 
-    const dummySales = [];
-    const usedCombinations = new Set();
-
-    while (dummySales.length < 100) {
-      const itemId = itemIds[Math.floor(Math.random() * itemIds.length)];
-      const year = 2023 + Math.floor(Math.random() * 3); // 2023–2025
-      const month = 1 + Math.floor(Math.random() * 12);
-      const paddedMonth = String(month).padStart(2, '0');
-      const date = `${year}-${paddedMonth}-01`;
-
-      const key = `${itemId}-${date}`;
-      if (usedCombinations.has(key)) continue;
-      usedCombinations.add(key);
-
-      let quantitySold = 10 + Math.floor(Math.random() * 100); // Range: 10–109
-
-      dummySales.push({ itemId, date, quantitySold });
+    // Create sales history for each month in 2024 for each item
+    const salesData = [];
+    for (const item of items) {
+      for (let month = 0; month < 12; month++) {
+        // Use 15th day of each month for sales date (just a fixed date)
+        const date = new Date(2024, month, 15);
+        salesData.push({
+          itemId: item.id,
+          date: date.toISOString().split('T')[0], // YYYY-MM-DD format
+          quantitySold: Math.floor(Math.random() * 20) + 1, // between 1 and 20
+        });
+      }
     }
 
-    await SalesHistory.bulkCreate(dummySales);
-    console.log('✅ Seeded 100 dummy sales records.');
-  } catch (error) {
-    console.error('❌ Error seeding dummy sales:', error);
-  } finally {
-    await sequelize.close();
+    await SalesHistory.bulkCreate(salesData);
+    console.log('Monthly sales data for 50 items created for 2024.');
+
+    process.exit(0);
+  } catch (err) {
+    console.error('Error seeding:', err);
+    process.exit(1);
   }
 }
 
-seedDummySales();
+seed();

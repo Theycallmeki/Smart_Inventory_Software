@@ -41,6 +41,11 @@ const Item = sequelize.define('Item', {
     allowNull: false,
     defaultValue: 0.00,
   },
+  barcode: {
+    type: DataTypes.STRING,
+    unique: true,
+    allowNull: false,
+  }, // ✅ <-- comma was missing here
 });
 
 module.exports = Item;

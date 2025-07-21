@@ -14,27 +14,23 @@
       <a href="/sales-history"> Sales History</a>
       <a href="/prediction"> Prediction</a>
     </header>
+
     <div class="container">
       <h1>Sales History</h1>
 
       <div class="glass-card">
-        <form id="transactionForm">
+        <form id="transactionForm" novalidate>
           <h3>Add Items to Transaction</h3>
 
           <div class="form-row">
             <label for="itemId">Item:</label>
-            <select id="itemId" name="itemId" required></select>
+            <select id="itemId" name="itemId"></select>
           </div>
 
           <div class="form-row">
             <label for="quantitySold">Quantity Sold:</label>
-            <input
-              type="number"
-              id="quantitySold"
-              name="quantitySold"
-              min="1"
-              required
-            />
+            <input type="number" id="quantitySold" name="quantitySold" min="1" />
+
             <button type="button" id="addToCartBtn">Add to Cart</button>
           </div>
 
@@ -89,41 +85,52 @@
         });
       }
 
-      function addToCart() {
-        const itemId = parseInt(document.getElementById("itemId").value);
-        const quantitySold = parseInt(
-          document.getElementById("quantitySold").value
-        );
-        if (!itemId || !quantitySold || quantitySold < 1) {
-          alert("Please select a valid item and quantity.");
-          return;
+      function addToCart(manual = true, scannedItem = null) {
+        let itemId, quantitySold, item;
+
+        if (manual) {
+          itemId = parseInt(document.getElementById("itemId").value);
+          quantitySold = parseInt(document.getElementById("quantitySold").value);
+
+          if (!itemId || !quantitySold || quantitySold < 1) {
+            alert("Please select a valid item and quantity.");
+            return;
+          }
+
+          item = itemsList.find((i) => i.id === itemId);
+        } else {
+          item = scannedItem;
+          itemId = item.id;
+          quantitySold = 1;
         }
 
-        const item = itemsList.find((i) => i.id === itemId);
         if (!item) {
-          alert("Invalid item selected.");
+          alert("Invalid item.");
           return;
         }
 
         if (quantitySold > item.quantity) {
-          alert(
-            `Cannot add ${quantitySold} units. Only ${item.quantity} in stock.`
-          );
+          alert(`Cannot add ${quantitySold}. Only ${item.quantity} in stock.`);
           return;
         }
 
         const cartItem = cart.find((c) => c.itemId === itemId);
         if (cartItem) {
           if (cartItem.quantitySold + quantitySold > item.quantity) {
-            alert(`Total quantity for this item in cart exceeds stock.`);
+            alert(`Total quantity exceeds stock for ${item.name}.`);
             return;
           }
           cartItem.quantitySold += quantitySold;
         } else {
-          cart.push({ itemId, itemName: item.name, quantitySold });
+          cart.push({
+            itemId,
+            itemName: item.name,
+            quantitySold,
+          });
         }
 
         renderCart();
+        if (manual) document.getElementById("quantitySold").value = "";
       }
 
       function renderCart() {
@@ -132,10 +139,10 @@
         cart.forEach((cartItem, index) => {
           const tr = document.createElement("tr");
           tr.innerHTML = `
-          <td>${cartItem.itemName}</td>
-          <td>${cartItem.quantitySold}</td>
-          <td><span class="remove-btn" data-index="${index}">Remove</span></td>
-        `;
+            <td>${cartItem.itemName}</td>
+            <td>${cartItem.quantitySold}</td>
+            <td><span class="remove-btn" data-index="${index}">Remove</span></td>
+          `;
           tbody.appendChild(tr);
         });
 
@@ -158,14 +165,14 @@
 
         sales.forEach((sale) => {
           tbody.innerHTML += `
-          <tr>
-            <td>${sale.Item.name}</td>
-            <td>${sale.Item.category}</td>
-            <td>${sale.Item.price}</td>
-            <td>${sale.date}</td>
-            <td>${sale.quantitySold}</td>
-          </tr>
-        `;
+            <tr>
+              <td>${sale.Item.name}</td>
+              <td>${sale.Item.category}</td>
+              <td>${sale.Item.price}</td>
+              <td>${sale.date}</td>
+              <td>${sale.quantitySold}</td>
+            </tr>
+          `;
         });
       }
 
@@ -201,7 +208,6 @@
         }
 
         alert("Transaction recorded successfully!");
-
         cart = [];
         renderCart();
         document.getElementById("transactionForm").reset();
@@ -210,9 +216,45 @@
         fetchSalesHistory();
       }
 
+      // Barcode scanner logic
+      let barcodeBuffer = "";
+      let scanTimeout;
+
+      window.addEventListener("keydown", async function (e) {
+        clearTimeout(scanTimeout);
+
+        if (e.key === "Enter") {
+          const code = barcodeBuffer.trim();
+          barcodeBuffer = "";
+
+          if (!code) return;
+
+          try {
+            const res = await fetch(`/api/items/barcode/${code}`);
+            if (!res.ok) {
+              alert("Item not found for barcode: " + code);
+              return;
+            }
+
+            const item = await res.json();
+            if (item.quantity < 1) {
+              alert(`${item.name} is out of stock.`);
+              return;
+            }
+
+            addToCart(false, item); // Automatic add from barcode scan
+          } catch (err) {
+            alert("Error fetching item by barcode.");
+          }
+        } else {
+          barcodeBuffer += e.key;
+          scanTimeout = setTimeout(() => (barcodeBuffer = ""), 500);
+        }
+      });
+
       document
         .getElementById("addToCartBtn")
-        .addEventListener("click", addToCart);
+        .addEventListener("click", () => addToCart(true));
       document
         .getElementById("transactionForm")
         .addEventListener("submit", submitTransaction);

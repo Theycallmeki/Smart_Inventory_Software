@@ -4,10 +4,11 @@ const bcrypt = require('bcryptjs');
 
 const Item = require('../models/item');
 const SalesHistory = require('../models/salesHistory');
-const User = require('../models/user'); // 👈 Add user model
+const User = require('../models/user');
 
 // --- USER AUTH ---
 
+// Register
 // Register
 router.post('/register', async (req, res) => {
   const { username, password } = req.body;
@@ -21,6 +22,7 @@ router.post('/register', async (req, res) => {
 
     res.redirect('/auth?success=registered');
   } catch (err) {
+    console.log('❌ Register Error:', err);  // <-- Added for debugging
     res.redirect('/auth?error=server');
   }
 });
@@ -39,9 +41,11 @@ router.post('/login', async (req, res) => {
     req.session.userId = user.id;
     res.redirect('/');
   } catch (err) {
+    console.log('❌ Login Error:', err);  // <-- Added for debugging
     res.redirect('/auth?error=server');
   }
 });
+
 
 // Logout
 router.get('/logout', (req, res) => {
@@ -50,11 +54,9 @@ router.get('/logout', (req, res) => {
   });
 });
 
-
-
-
 // --- ITEM CRUD ---
 
+// GET all items
 router.get('/items', async (req, res) => {
   try {
     const items = await Item.findAll();
@@ -64,25 +66,48 @@ router.get('/items', async (req, res) => {
   }
 });
 
+// ✅ GET item by barcode
+router.get('/items/barcode/:barcode', async (req, res) => {
+  const { barcode } = req.params;
+
+  try {
+    const item = await Item.findOne({ where: { barcode } });
+
+    if (!item) {
+      return res.status(404).json({ error: 'Item not found for barcode: ' + barcode });
+    }
+
+    res.json(item);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// CREATE item
 router.post('/items', async (req, res) => {
-  const { name, quantity, category, price } = req.body;
+  const { name, quantity, category, price, barcode } = req.body;
   const validCategories = Item.rawAttributes.category.values;
 
   if (!validCategories.includes(category)) {
     return res.status(400).json({ error: `Invalid category. Allowed: ${validCategories.join(', ')}` });
   }
 
+  if (!barcode) {
+    return res.status(400).json({ error: 'Barcode is required.' });
+  }
+
   try {
-    const item = await Item.create({ name, quantity, category, price });
+    const item = await Item.create({ name, quantity, category, price, barcode });
     res.status(201).json(item);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 });
 
+// UPDATE item
 router.put('/items/:id', async (req, res) => {
   const { id } = req.params;
-  const { name, category, price, quantity } = req.body;
+  const { name, category, price, quantity, barcode } = req.body;
 
   try {
     const item = await Item.findByPk(id);
@@ -94,6 +119,7 @@ router.put('/items/:id', async (req, res) => {
 
     item.name = name ?? item.name;
     item.category = category ?? item.category;
+    item.barcode = barcode ?? item.barcode;
     if (price !== undefined) item.price = price;
     if (quantity !== undefined) item.quantity = quantity;
 
@@ -104,6 +130,7 @@ router.put('/items/:id', async (req, res) => {
   }
 });
 
+// DELETE item
 router.delete('/items/:id', async (req, res) => {
   const { id } = req.params;
   try {
@@ -119,6 +146,7 @@ router.delete('/items/:id', async (req, res) => {
 
 // --- SALES HISTORY ---
 
+// GET sales history
 router.get('/sales-history', async (req, res) => {
   try {
     const sales = await SalesHistory.findAll({ include: [{ model: Item }] });
@@ -128,6 +156,7 @@ router.get('/sales-history', async (req, res) => {
   }
 });
 
+// CREATE sales record
 router.post('/sales-history', async (req, res) => {
   const { itemId, date, quantitySold } = req.body;
 
