@@ -66,19 +66,23 @@ router.get('/items', async (req, res) => {
   }
 });
 
-// ✅ GET item by barcode
+// GET item by barcode
 router.get('/items/barcode/:barcode', async (req, res) => {
   const { barcode } = req.params;
+  console.log(`Received request for barcode: ${barcode}`);
 
   try {
     const item = await Item.findOne({ where: { barcode } });
 
     if (!item) {
+      console.log(`Item not found for barcode: ${barcode}`);
       return res.status(404).json({ error: 'Item not found for barcode: ' + barcode });
     }
 
+    console.log('Item found:', item.toJSON());
     res.json(item);
   } catch (err) {
+    console.error('Error fetching item:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
@@ -176,6 +180,48 @@ router.post('/sales-history', async (req, res) => {
     res.status(201).json({ sale, item });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// --- ENHANCED CHECKOUT (barcode-based) ---
+router.post('/checkout', async (req, res) => {
+  const { cart, paymentMethod } = req.body;
+  console.log('Checkout received:', cart, paymentMethod);
+
+  try {
+    for (const cartItem of cart) {
+      // Lookup by barcode instead of PK
+      const item = await Item.findOne({ where: { barcode: cartItem.barcode } });
+
+      if (!item) {
+        console.log(`Item not found for barcode: ${cartItem.barcode}`);
+        continue; // skip this item
+      }
+
+      if (item.quantity < cartItem.quantity) {
+        console.log(`Insufficient stock for: ${item.name} (${cartItem.quantity} requested, ${item.quantity} available)`);
+        continue; // skip this item
+      }
+
+      // Reduce stock
+      const qty = Number(cartItem.quantity);
+      item.quantity -= cartItem.quantity;
+      await item.save();
+
+      // Record sale
+      await SalesHistory.create({
+        itemId: item.id,
+        quantitySold: qty,
+        date: new Date()
+      });
+
+      console.log(`Sold ${cartItem.quantity} of ${item.name}. Remaining stock: ${item.quantity}`);
+    }
+
+    res.json({ success: true, message: 'Checkout completed' });
+  } catch (err) {
+    console.error('Checkout error:', err);
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
