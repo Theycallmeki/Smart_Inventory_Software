@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>POS - Add Transaction</title>
+    <link rel="stylesheet" href="/salesHistory.css" />
+  </head>
+  <body>
+    <header class="fixed-header">
+      <a href="/">Home</a>
+      <a href="/item">Items</a>
+      <a href="/admin">Admin Panel</a>
+      <a href="/sales-history">Sales History</a>
+      <a href="/prediction">Prediction</a>
+      <a href="/pos">Pos Mode</a>
+
+    </header>
+
+    <div class="container">
+      <div class="glass-card">
+        <form id="transactionForm" novalidate>
+          <h3>Add Items to Transaction</h3>
+
+          <div class="form-row">
+            <label for="itemId">Item:</label>
+            <select id="itemId" name="itemId"></select>
+          </div>
+
+          <div class="form-row">
+            <label for="quantitySold">Quantity Sold:</label>
+            <input type="number" id="quantitySold" name="quantitySold" min="1" />
+            <button type="button" id="addToCartBtn">Add to Cart</button>
+          </div>
+
+          <table id="cartTable">
+            <thead>
+              <tr>
+                <th>Item Name</th>
+                <th>Quantity</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+
+          <button type="submit" style="margin-top: 20px">Submit Transaction</button>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      let itemsList = [];
+      let cart = [];
+
+      // Fetch items from backend
+      async function fetchItems() {
+        const res = await fetch("/api/items");
+        itemsList = await res.json();
+        const select = document.getElementById("itemId");
+        select.innerHTML = "";
+        itemsList.forEach((item) => {
+          const option = document.createElement("option");
+          option.value = item.id;
+          option.textContent = `${item.name} (${item.category}) - Stock: ${item.quantity}`;
+          select.appendChild(option);
+        });
+      }
+
+      // Add item to cart
+      function addToCart(manual = true, scannedItem = null) {
+        let itemId, quantitySold, item;
+
+        if (manual) {
+          itemId = parseInt(document.getElementById("itemId").value);
+          quantitySold = parseInt(document.getElementById("quantitySold").value);
+
+          if (!itemId || !quantitySold || quantitySold < 1) {
+            alert("Please select a valid item and quantity.");
+            return;
+          }
+
+          item = itemsList.find((i) => i.id === itemId);
+        } else {
+          item = scannedItem;
+          itemId = item.id;
+          quantitySold = 1;
+        }
+
+        if (!item) {
+          alert("Invalid item.");
+          return;
+        }
+
+        if (quantitySold > item.quantity) {
+          alert(`Cannot add ${quantitySold}. Only ${item.quantity} in stock.`);
+          return;
+        }
+
+        const cartItem = cart.find((c) => c.itemId === itemId);
+        if (cartItem) {
+          if (cartItem.quantitySold + quantitySold > item.quantity) {
+            alert(`Total quantity exceeds stock for ${item.name}.`);
+            return;
+          }
+          cartItem.quantitySold += quantitySold;
+        } else {
+          cart.push({
+            itemId,
+            itemName: item.name,
+            quantitySold,
+          });
+        }
+
+        renderCart();
+        if (manual) document.getElementById("quantitySold").value = "";
+      }
+
+      // Render cart table
+      function renderCart() {
+        const tbody = document.querySelector("#cartTable tbody");
+        tbody.innerHTML = "";
+        cart.forEach((cartItem, index) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${cartItem.itemName}</td>
+            <td>${cartItem.quantitySold}</td>
+            <td><span class="remove-btn" data-index="${index}">Remove</span></td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+        document.querySelectorAll(".remove-btn").forEach((btn) => {
+          btn.addEventListener("click", (e) => {
+            const index = e.target.getAttribute("data-index");
+            cart.splice(index, 1);
+            renderCart();
+          });
+        });
+      }
+
+      // Submit transaction to backend
+      async function submitTransaction(e) {
+        e.preventDefault();
+
+        if (cart.length === 0) {
+          alert("Add at least one item to the transaction.");
+          return;
+        }
+
+        const transactionId = "TX" + Date.now();
+        const today = new Date();
+        const date = today.toISOString().split("T")[0];
+
+        for (const cartItem of cart) {
+          const res = await fetch("/api/sales-history", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              itemId: cartItem.itemId,
+              date,
+              quantitySold: cartItem.quantitySold,
+              transactionId,
+            }),
+          });
+
+          if (!res.ok) {
+            const error = await res.json();
+            alert("Error adding sale: " + error.error);
+            return;
+          }
+        }
+
+        alert("Transaction recorded successfully!");
+        cart = [];
+        renderCart();
+        document.getElementById("transactionForm").reset();
+        fetchItems();
+      }
+
+      // Barcode scanner logic
+      let barcodeBuffer = "";
+      let scanTimeout;
+
+      window.addEventListener("keydown", async function (e) {
+        clearTimeout(scanTimeout);
+
+        if (e.key === "Enter") {
+          const code = barcodeBuffer.trim();
+          barcodeBuffer = "";
+
+          if (!code) return;
+
+          try {
+            const res = await fetch(`/api/items/barcode/${code}`);
+            if (!res.ok) {
+              alert("Item not found for barcode: " + code);
+              return;
+            }
+
+            const item = await res.json();
+            if (item.quantity < 1) {
+              alert(`${item.name} is out of stock.`);
+              return;
+            }
+
+            addToCart(false, item); // Automatic add from barcode scan
+          } catch (err) {
+            alert("Error fetching item by barcode.");
+          }
+        } else {
+          barcodeBuffer += e.key;
+          scanTimeout = setTimeout(() => (barcodeBuffer = ""), 500);
+        }
+      });
+
+      // Event listeners
+      document
+        .getElementById("addToCartBtn")
+        .addEventListener("click", () => addToCart(true));
+      document
+        .getElementById("transactionForm")
+        .addEventListener("submit", submitTransaction);
+
+      // Initial fetch
+      fetchItems();
+    </script>
+  </body>
+</html>

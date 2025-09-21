@@ -9,5 +9,6 @@ router.get('/admin', ensureAuthenticated, (req, res) => res.sendFile(path.join(_
 router.get('/sales-history', ensureAuthenticated, (req, res) => res.sendFile(path.join(__dirname, '../views/salesHistory.html')));
 router.get('/prediction', ensureAuthenticated, (req, res) => res.sendFile(path.join(__dirname, '../views/prediction.html')));
 router.get('/auth', (req, res) => res.sendFile(path.join(__dirname, '../views/auth.html')));
+router.get('/pos', ensureAuthenticated, (req, res) => res.sendFile(path.join(__dirname, '../views/pos.html')));
 
 module.exports = router;
