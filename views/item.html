@@ -4,6 +4,20 @@
     <meta charset="UTF-8" />
     <title>Item Management</title>
     <link rel="stylesheet" href="item.css" />
+    <style>
+      /* Hide form by default */
+      #itemFormContainer {
+        display: none;
+        margin-top: 10px;
+      }
+
+      /* Toggle button style (matches your theme, minimal) */
+      #toggleFormBtn {
+        margin: 10px 0;
+        padding: 5px 10px;
+        cursor: pointer;
+      }
+    </style>
   </head>
   <body>
     <header class="fixed-header">
@@ -13,14 +27,78 @@
       <a href="/sales-history">Sales History</a>
       <a href="/prediction">Prediction</a>
       <a href="/pos">Pos Mode</a>
-
     </header>
 
     <div class="page-content">
       <h1>Items</h1>
 
+      <!-- 🔍 Search -->
       <input type="text" id="searchInput" placeholder="Search by name..." />
 
+      <!-- 🔢 Pagination Controls -->
+      <div id="paginationControls" style="margin: 10px 0;">
+        <button id="prevBtn">⬅ Prev</button>
+        <span id="pageInfo"></span>
+        <button id="nextBtn">Next ➡</button>
+        <label>
+          Rows per page:
+          <input type="number" id="rowsPerPage" value="10" min="1" max="100" style="width:60px;" />
+        </label>
+      </div>
+
+      <!-- 🆕 Toggle Add Item Form -->
+      <button id="toggleFormBtn">➕ Add New Item</button>
+      <div id="itemFormContainer">
+        <h2>Add New Item</h2>
+        <form id="itemForm">
+          <div class="form-group">
+            <label>Name:</label>
+            <input type="text" id="name" required />
+          </div>
+          <div class="form-group">
+            <label>Barcode:</label>
+            <input type="text" id="barcode" required />
+          </div>
+          <div class="form-group">
+            <label>Quantity:</label>
+            <input type="number" id="quantity" required />
+          </div>
+          <div class="form-group">
+            <label>Price:</label>
+            <input type="number" id="price" step="0.01" required />
+          </div>
+          <div class="form-group">
+            <label>Category:</label>
+            <select id="category" required>
+              <option value="">Select category</option>
+              <option value="Fruits">Fruits</option>
+              <option value="Vegetables">Vegetables</option>
+              <option value="Meat">Meat</option>
+              <option value="Seafood">Seafood</option>
+              <option value="Dairy">Dairy</option>
+              <option value="Beverages">Beverages</option>
+              <option value="Snacks">Snacks</option>
+              <option value="Bakery">Bakery</option>
+              <option value="Frozen">Frozen</option>
+              <option value="Canned Goods">Canned Goods</option>
+              <option value="Condiments">Condiments</option>
+              <option value="Dry Goods">Dry Goods</option>
+              <option value="Grains &amp; Pasta">Grains &amp; Pasta</option>
+              <option value="Spices &amp; Seasonings">Spices &amp; Seasonings</option>
+              <option value="Breakfast &amp; Cereal">Breakfast &amp; Cereal</option>
+              <option value="Personal Care">Personal Care</option>
+              <option value="Household">Household</option>
+              <option value="Baby Products">Baby Products</option>
+              <option value="Pet Supplies">Pet Supplies</option>
+              <option value="Health &amp; Wellness">Health &amp; Wellness</option>
+              <option value="Cleaning Supplies">Cleaning Supplies</option>
+            </select>
+          </div>
+          <button type="submit">Create Item</button>
+        </form>
+      </div>
+
+      <!-- 📋 Items Table -->
       <table id="itemTable">
         <thead>
           <tr>
@@ -36,61 +114,26 @@
         <tbody></tbody>
       </table>
 
-      <h2>Add New Item</h2>
-      <form id="itemForm">
-        <div class="form-group">
-          <label>Name:</label>
-          <input type="text" id="name" required />
-        </div>
-        <div class="form-group">
-          <label>Barcode:</label>
-          <input type="text" id="barcode" required />
-        </div>
-        <div class="form-group">
-          <label>Quantity:</label>
-          <input type="number" id="quantity" required />
-        </div>
-        <div class="form-group">
-          <label>Price:</label>
-          <input type="number" id="price" step="0.01" required />
-        </div>
-        <div class="form-group">
-          <label>Category:</label>
-          <select id="category" required>
-            <option value="">Select category</option>
-            <option value="Fruits">Fruits</option>
-            <option value="Vegetables">Vegetables</option>
-            <option value="Meat">Meat</option>
-            <option value="Seafood">Seafood</option>
-            <option value="Dairy">Dairy</option>
-            <option value="Beverages">Beverages</option>
-            <option value="Snacks">Snacks</option>
-            <option value="Bakery">Bakery</option>
-            <option value="Frozen">Frozen</option>
-            <option value="Canned Goods">Canned Goods</option>
-            <option value="Condiments">Condiments</option>
-            <option value="Dry Goods">Dry Goods</option>
-            <option value="Grains &amp; Pasta">Grains &amp; Pasta</option>
-            <option value="Spices &amp; Seasonings">Spices &amp; Seasonings</option>
-            <option value="Breakfast &amp; Cereal">Breakfast &amp; Cereal</option>
-            <option value="Personal Care">Personal Care</option>
-            <option value="Household">Household</option>
-            <option value="Baby Products">Baby Products</option>
-            <option value="Pet Supplies">Pet Supplies</option>
-            <option value="Health &amp; Wellness">Health &amp; Wellness</option>
-            <option value="Cleaning Supplies">Cleaning Supplies</option>
-          </select>
-        </div>
-        <button type="submit">Create Item</button>
-      </form>
-
       <script>
+        let allItems = [];
+        let currentPage = 1;
+        let rowsPerPage = 10;
+
         async function fetchItems() {
           const res = await fetch("/api/items");
-          const items = await res.json();
+          allItems = await res.json();
+          renderTable();
+        }
+
+        function renderTable() {
           const tbody = document.querySelector("#itemTable tbody");
           tbody.innerHTML = "";
-          items.forEach((item) => {
+
+          const start = (currentPage - 1) * rowsPerPage;
+          const end = start + rowsPerPage;
+          const paginatedItems = allItems.slice(start, end);
+
+          paginatedItems.forEach((item) => {
             const row = document.createElement("tr");
             row.innerHTML = `
               <td><strong>${item.id}</strong></td>
@@ -117,6 +160,9 @@
             `;
             tbody.appendChild(row);
           });
+
+          document.getElementById("pageInfo").textContent =
+            `Page ${currentPage} of ${Math.ceil(allItems.length / rowsPerPage)}`;
         }
 
         async function createItem(e) {
@@ -142,6 +188,7 @@
           if (res.ok) {
             document.getElementById("itemForm").reset();
             fetchItems();
+            toggleForm(false); // hide again after adding
           } else {
             alert(data.error || "Error adding item");
           }
@@ -179,6 +226,27 @@
           }
         }
 
+        // 🔽 Toggle dropdown
+        function toggleForm(forceState) {
+          const container = document.getElementById("itemFormContainer");
+          const btn = document.getElementById("toggleFormBtn");
+          if (forceState === false) {
+            container.style.display = "none";
+            btn.textContent = "➕ Add New Item";
+            return;
+          }
+          if (container.style.display === "none") {
+            container.style.display = "block";
+            btn.textContent = "✖ Close Form";
+          } else {
+            container.style.display = "none";
+            btn.textContent = "➕ Add New Item";
+          }
+        }
+
+        document.getElementById("toggleFormBtn").addEventListener("click", () => toggleForm());
+        document.getElementById("itemForm").addEventListener("submit", createItem);
+
         document.getElementById("searchInput").addEventListener("input", function () {
           const filter = this.value.toLowerCase();
           const rows = document.querySelectorAll("#itemTable tbody tr");
@@ -188,7 +256,25 @@
           });
         });
 
-        document.getElementById("itemForm").addEventListener("submit", createItem);
+        document.getElementById("rowsPerPage").addEventListener("change", function () {
+          rowsPerPage = parseInt(this.value, 10) || 10;
+          currentPage = 1;
+          renderTable();
+        });
+
+        document.getElementById("prevBtn").addEventListener("click", function () {
+          if (currentPage > 1) {
+            currentPage--;
+            renderTable();
+          }
+        });
+
+        document.getElementById("nextBtn").addEventListener("click", function () {
+          if (currentPage < Math.ceil(allItems.length / rowsPerPage)) {
+            currentPage++;
+            renderTable();
+          }
+        });
 
         fetchItems();
       </script>

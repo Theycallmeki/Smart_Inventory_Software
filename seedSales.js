@@ -21,54 +21,64 @@ function getRandomPrice() {
   return (Math.random() * 99.5 + 0.5).toFixed(2);
 }
 
-// Generate a random item name for simplicity
+// Generate a random item name
 function getRandomItemName(index) {
   return `Item-${index + 1}`;
 }
 
-// Generate dummy barcode - simple incremental string
+// Generate dummy barcode
 function getBarcode(index) {
   return (1000000000 + index).toString();
+}
+
+// Generate random date between 2023 and 2025
+function getRandomDate() {
+  const start = new Date(2023, 0, 1).getTime();
+  const end = new Date(2025, 8, 1).getTime(); // up to Sep 2025
+  return new Date(start + Math.random() * (end - start));
 }
 
 async function seed() {
   try {
     await sequelize.sync({ force: true }); // reset tables
 
-    // Create 50 items
+    // Create 100 items
     const itemsData = [];
-    for (let i = 0; i < 50; i++) {
+    for (let i = 0; i < 100; i++) {
+      const randomDate = getRandomDate();
       itemsData.push({
         name: getRandomItemName(i),
         quantity: Math.floor(Math.random() * 100) + 10,
         category: getRandomCategory(),
         price: getRandomPrice(),
         barcode: getBarcode(i),
+        createdAt: randomDate,
+        updatedAt: randomDate,
       });
     }
     const items = await Item.bulkCreate(itemsData);
-    console.log('50 dummy items created.');
+    console.log('✅ 100 dummy items created.');
 
-    // Create sales history for each month in 2024 for each item
+    // Create sales history (random 5–20 sales per item)
     const salesData = [];
     for (const item of items) {
-      for (let month = 0; month < 12; month++) {
-        // Use 15th day of each month for sales date (just a fixed date)
-        const date = new Date(2024, month, 15);
+      const salesCount = Math.floor(Math.random() * 16) + 5; // 5–20
+      for (let i = 0; i < salesCount; i++) {
+        const saleDate = getRandomDate();
         salesData.push({
           itemId: item.id,
-          date: date.toISOString().split('T')[0], // YYYY-MM-DD format
-          quantitySold: Math.floor(Math.random() * 20) + 1, // between 1 and 20
+          date: saleDate.toISOString().split('T')[0], // YYYY-MM-DD
+          quantitySold: Math.floor(Math.random() * 50) + 1, // 1–50
         });
       }
     }
 
     await SalesHistory.bulkCreate(salesData);
-    console.log('Monthly sales data for 50 items created for 2024.');
+    console.log(`✅ ${salesData.length} random sales history records created.`);
 
     process.exit(0);
   } catch (err) {
-    console.error('Error seeding:', err);
+    console.error('❌ Error seeding:', err);
     process.exit(1);
   }
 }

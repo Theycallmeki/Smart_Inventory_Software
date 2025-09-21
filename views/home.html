@@ -9,13 +9,16 @@
   <body>
     <div class="container">
       <h1>Welcome to the Home Page.</h1>
-      <a href="/item">Go to Items</a>
-      <a href="/admin">Go to Admin Panel</a>
-      <a href="/sales-history">Go to Sales History</a>
-      <a href="/prediction">Go to Prediction</a>
-      <a href="/pos">Pos Mode</a>
+      <p class="subtitle">Choose where you want to go</p>
 
-      <a href="/api/logout" style="color: red; font-weight: bold; margin-top: 20px; display: block;">Logout</a>
+      <div class="nav-grid">
+        <a href="/item" class="nav-item">Go to Items</a>
+        <a href="/admin" class="nav-item">Go to Admin Panel</a>
+        <a href="/sales-history" class="nav-item">Go to Sales History</a>
+        <a href="/prediction" class="nav-item">Go to Prediction</a>
+        <a href="/pos" class="nav-item">POS Mode</a>
+        <a href="/api/logout" class="nav-item logout-btn">Logout</a>
+      </div>
     </div>
   </body>
 </html>
