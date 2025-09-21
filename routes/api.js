@@ -6,9 +6,12 @@ const Item = require('../models/item');
 const SalesHistory = require('../models/salesHistory');
 const User = require('../models/user');
 
+// ✅ Import AI Model functions
+const { recommendBestSellers, trainModel } = require('../ai/bestSellerModel');
+
+
 // --- USER AUTH ---
 
-// Register
 // Register
 router.post('/register', async (req, res) => {
   const { username, password } = req.body;
@@ -22,7 +25,7 @@ router.post('/register', async (req, res) => {
 
     res.redirect('/auth?success=registered');
   } catch (err) {
-    console.log('❌ Register Error:', err);  // <-- Added for debugging
+    console.log('❌ Register Error:', err);
     res.redirect('/auth?error=server');
   }
 });
@@ -41,11 +44,10 @@ router.post('/login', async (req, res) => {
     req.session.userId = user.id;
     res.redirect('/');
   } catch (err) {
-    console.log('❌ Login Error:', err);  // <-- Added for debugging
+    console.log('❌ Login Error:', err);
     res.redirect('/auth?error=server');
   }
 });
-
 
 // Logout
 router.get('/logout', (req, res) => {
@@ -53,6 +55,7 @@ router.get('/logout', (req, res) => {
     res.redirect('/auth');
   });
 });
+
 
 // --- ITEM CRUD ---
 
@@ -148,6 +151,7 @@ router.delete('/items/:id', async (req, res) => {
   }
 });
 
+
 // --- SALES HISTORY ---
 
 // GET sales history
@@ -183,6 +187,7 @@ router.post('/sales-history', async (req, res) => {
   }
 });
 
+
 // --- ENHANCED CHECKOUT (barcode-based) ---
 router.post('/checkout', async (req, res) => {
   const { cart, paymentMethod } = req.body;
@@ -190,25 +195,21 @@ router.post('/checkout', async (req, res) => {
 
   try {
     for (const cartItem of cart) {
-      // Lookup by barcode instead of PK
       const item = await Item.findOne({ where: { barcode: cartItem.barcode } });
-
       if (!item) {
         console.log(`Item not found for barcode: ${cartItem.barcode}`);
-        continue; // skip this item
+        continue;
       }
 
       if (item.quantity < cartItem.quantity) {
         console.log(`Insufficient stock for: ${item.name} (${cartItem.quantity} requested, ${item.quantity} available)`);
-        continue; // skip this item
+        continue;
       }
 
-      // Reduce stock
       const qty = Number(cartItem.quantity);
       item.quantity -= cartItem.quantity;
       await item.save();
 
-      // Record sale
       await SalesHistory.create({
         itemId: item.id,
         quantitySold: qty,
@@ -224,5 +225,31 @@ router.post('/checkout', async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
+
+// --- AI ENDPOINTS ---
+
+// Train all item models
+router.get('/train-model', async (req, res) => {
+  try {
+    const msg = await trainModel();
+    res.json({ success: true, message: msg });
+  } catch (err) {
+    console.error('❌ Error in /train-model:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Get best seller predictions
+router.get('/best-sellers', async (req, res) => {
+  try {
+    const results = await recommendBestSellers(5);
+    res.json({ success: true, data: results });
+  } catch (err) {
+    console.error('❌ Error in /best-sellers:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 
 module.exports = router;

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AI Best Seller Predictor</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    button { margin: 5px; padding: 10px 15px; cursor: pointer; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+    th { background: #f4f4f4; }
+    .top1 { background: #d4edda; font-weight: bold; } /* highlight #1 */
+  </style>
+</head>
+<body>
+  <h1>AI Best Seller Predictor</h1>
+
+  <button id="trainBtn">Train Model</button>
+  <button id="predictBtn">Get Best Sellers</button>
+
+  <div id="output"></div>
+
+  <script>
+    // Train the model
+    document.getElementById('trainBtn').addEventListener('click', async () => {
+      try {
+        const res = await fetch('/api/train-model');
+        const data = await res.json();
+        document.getElementById('output').innerHTML =
+          `<p><strong>Train Model:</strong> ${data.message}</p>`;
+      } catch (err) {
+        document.getElementById('output').innerHTML =
+          `<p style="color:red;">Error training model: ${err.message}</p>`;
+      }
+    });
+
+    // Get predictions
+    document.getElementById('predictBtn').addEventListener('click', async () => {
+      try {
+        const res = await fetch('/api/best-sellers');
+        const data = await res.json();
+
+        if (!data.data || data.data.length === 0) {
+          document.getElementById('output').innerHTML =
+            "<p style='color:red;'>⚠️ No predictions available. Please <strong>train the model first</strong>.</p>";
+          return;
+        }
+
+        let table = `
+          <h2>Top 5 Predicted Best Sellers</h2>
+          <table>
+            <tr>
+              <th>Rank</th>
+              <th>Item</th>
+              <th>Predicted Next Quantity</th>
+            </tr>
+        `;
+
+        data.data.forEach((p, i) => {
+          table += `
+            <tr class="${i === 0 ? 'top1' : ''}">
+              <td>${i + 1}</td>
+              <td>${p.item}</td>
+              <td>${p.predictedNext}</td>
+            </tr>
+          `;
+        });
+
+        table += "</table>";
+        document.getElementById('output').innerHTML = table;
+      } catch (err) {
+        document.getElementById('output').innerHTML =
+          `<p style="color:red;">Error getting predictions: ${err.message}</p>`;
+      }
+    });
+  </script>
+</body>
+</html>

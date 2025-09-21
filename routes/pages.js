@@ -10,5 +10,6 @@ router.get('/sales-history', ensureAuthenticated, (req, res) => res.sendFile(pat
 router.get('/prediction', ensureAuthenticated, (req, res) => res.sendFile(path.join(__dirname, '../views/prediction.html')));
 router.get('/auth', (req, res) => res.sendFile(path.join(__dirname, '../views/auth.html')));
 router.get('/pos', ensureAuthenticated, (req, res) => res.sendFile(path.join(__dirname, '../views/pos.html')));
+router.get('/best', ensureAuthenticated, (req, res) => res.sendFile(path.join(__dirname, '../views/best-seller.html')));
 
 module.exports = router;

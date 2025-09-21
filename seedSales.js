@@ -1,86 +1,40 @@
-// seedSales.js
+// seedDemo3.js
 const sequelize = require('./db');
 const Item = require('./models/item');
-const SalesHistory = require('./models/SalesHistory');
+const SalesHistory = require('./models/salesHistory');
 
-const categories = [
-  'Fruits', 'Vegetables', 'Meat', 'Seafood', 'Dairy', 'Beverages',
-  'Snacks', 'Bakery', 'Frozen', 'Canned Goods', 'Condiments',
-  'Dry Goods', 'Grains & Pasta', 'Spices & Seasonings',
-  'Breakfast & Cereal', 'Personal Care', 'Household', 'Baby Products',
-  'Pet Supplies', 'Health & Wellness', 'Cleaning Supplies'
-];
-
-// Generate random category from list
-function getRandomCategory() {
-  return categories[Math.floor(Math.random() * categories.length)];
-}
-
-// Generate random price between 0.5 and 100
-function getRandomPrice() {
-  return (Math.random() * 99.5 + 0.5).toFixed(2);
-}
-
-// Generate a random item name
-function getRandomItemName(index) {
-  return `Item-${index + 1}`;
-}
-
-// Generate dummy barcode
-function getBarcode(index) {
-  return (1000000000 + index).toString();
-}
-
-// Generate random date between 2023 and 2025
-function getRandomDate() {
-  const start = new Date(2023, 0, 1).getTime();
-  const end = new Date(2025, 8, 1).getTime(); // up to Sep 2025
-  return new Date(start + Math.random() * (end - start));
-}
-
-async function seed() {
+async function seedDemo3() {
   try {
-    await sequelize.sync({ force: true }); // reset tables
+    await sequelize.sync(); // ✅ no force, keeps existing data
 
-    // Create 100 items
-    const itemsData = [];
-    for (let i = 0; i < 100; i++) {
-      const randomDate = getRandomDate();
-      itemsData.push({
-        name: getRandomItemName(i),
-        quantity: Math.floor(Math.random() * 100) + 10,
-        category: getRandomCategory(),
-        price: getRandomPrice(),
-        barcode: getBarcode(i),
-        createdAt: randomDate,
-        updatedAt: randomDate,
-      });
-    }
-    const items = await Item.bulkCreate(itemsData);
-    console.log('✅ 100 dummy items created.');
+    // Create demo3 item (zigzag trend)
+    const demo3 = await Item.create({
+      id: 107,
+      name: 'demo3',
+      quantity: 100,
+      category: 'Fruits',
+      price: 9.99,
+      barcode: '00000107',
+    });
 
-    // Create sales history (random 5–20 sales per item)
-    const salesData = [];
-    for (const item of items) {
-      const salesCount = Math.floor(Math.random() * 16) + 5; // 5–20
-      for (let i = 0; i < salesCount; i++) {
-        const saleDate = getRandomDate();
-        salesData.push({
-          itemId: item.id,
-          date: saleDate.toISOString().split('T')[0], // YYYY-MM-DD
-          quantitySold: Math.floor(Math.random() * 50) + 1, // 1–50
-        });
-      }
-    }
+    const demo3Sales = [
+      { date: '2025-09-14', quantitySold: 10 },
+      { date: '2025-09-15', quantitySold: 20 },
+      { date: '2025-09-16', quantitySold: 15 },
+      { date: '2025-09-17', quantitySold: 25 },
+      { date: '2025-09-18', quantitySold: 12 },
+      { date: '2025-09-19', quantitySold: 30 },
+      { date: '2025-09-20', quantitySold: 18 },
+    ].map(s => ({ ...s, itemId: demo3.id }));
 
-    await SalesHistory.bulkCreate(salesData);
-    console.log(`✅ ${salesData.length} random sales history records created.`);
+    await SalesHistory.bulkCreate(demo3Sales);
 
+    console.log('✅ demo3 seeded successfully!');
     process.exit(0);
   } catch (err) {
-    console.error('❌ Error seeding:', err);
+    console.error('❌ Error seeding demo3:', err);
     process.exit(1);
   }
 }
 
-seed();
+seedDemo3();
