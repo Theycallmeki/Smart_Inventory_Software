@@ -120,7 +120,7 @@
         let rowsPerPage = 10;
 
         async function fetchItems() {
-          const res = await fetch("/api/items");
+          const res = await fetch("/api/items/");
           allItems = await res.json();
           renderTable();
         }
@@ -178,7 +178,7 @@
             return;
           }
 
-          const res = await fetch("/api/items", {
+          const res = await fetch("/api/items/", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ name, barcode, quantity, price, category }),

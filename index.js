@@ -1,5 +1,4 @@
 // index.js
-
 const express = require('express');
 const session = require('express-session');
 const path = require('path');
@@ -33,8 +32,12 @@ app.use((req, res, next) => {
 });
 
 // ✅ Routes
-app.use('/', require('./routes/pages'));
-app.use('/api', require('./routes/api'));
+app.use('/', require('./routes/pages'));                 // Frontend pages
+app.use('/api/auth', require('./routes/authApi'));       // Auth routes
+app.use('/api/items', require('./routes/itemApi'));      // Item CRUD
+app.use('/api/sales-history', require('./routes/historyApi')); // Sales history + checkout
+app.use('/api/ai', require('./routes/aiApi'));           // AI endpoints
+
 
 // ✅ Start server
 sequelize.sync().then(() => {

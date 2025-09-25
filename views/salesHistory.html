@@ -89,7 +89,7 @@
       let rowsPerPage = 10;
 
       async function fetchSalesHistory() {
-        const res = await fetch("/api/sales-history");
+        const res = await fetch("/api/sales-history/");
         salesData = await res.json();
 
         // sort by latest date

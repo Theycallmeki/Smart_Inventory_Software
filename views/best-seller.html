@@ -24,7 +24,7 @@
     // Train the model
     document.getElementById('trainBtn').addEventListener('click', async () => {
       try {
-        const res = await fetch('/api/train-model');
+        const res = await fetch('/api/ai/train-model');
         const data = await res.json();
         document.getElementById('output').innerHTML =
           `<p><strong>Train Model:</strong> ${data.message}</p>`;
@@ -37,7 +37,7 @@
     // Get predictions
     document.getElementById('predictBtn').addEventListener('click', async () => {
       try {
-        const res = await fetch('/api/best-sellers');
+        const res = await fetch('/api/ai/best-sellers');
         const data = await res.json();
 
         if (!data.data || data.data.length === 0) {
