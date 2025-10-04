@@ -36,7 +36,7 @@ router.post('/', async (req, res) => {
 });
 
 // --- PAYMONGO CHECKOUT SESSION (GCash) ---
-const PAYMONGO_SECRET_KEY = '';
+const PAYMONGO_SECRET_KEY = 'sk_test_ZmAd5jPPHWax3XAxbyrQPexq';
 
 // Create Checkout Session
 router.post('/create-checkout-session', async (req, res) => {
