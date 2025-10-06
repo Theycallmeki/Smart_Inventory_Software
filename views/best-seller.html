@@ -5,7 +5,7 @@
   <title>AI Best Seller Predictor</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; }
-    button { margin: 5px; padding: 10px 15px; cursor: pointer; }
+    button, select { margin: 5px; padding: 10px 15px; cursor: pointer; }
     table { width: 100%; border-collapse: collapse; margin-top: 15px; }
     th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
     th { background: #f4f4f4; }
@@ -15,39 +15,67 @@
 <body>
   <h1>AI Best Seller Predictor</h1>
 
+  <label for="modelSelect"><strong>Select Model Period:</strong></label>
+  <select id="modelSelect">
+    <option value="7" selected>7-Day Model</option>
+    <option value="30">30-Day Model</option>
+  </select>
+
   <button id="trainBtn">Train Model</button>
   <button id="predictBtn">Get Best Sellers</button>
 
   <div id="output"></div>
 
   <script>
-    // Train the model
+    const modelSelect = document.getElementById('modelSelect');
+    const outputDiv = document.getElementById('output');
+
+    // Clear output whenever model changes
+    modelSelect.addEventListener('change', () => {
+      outputDiv.innerHTML = '';
+    });
+
+    // Helper to get API route based on selected model
+    function getApiRoute(action) {
+      const period = modelSelect.value;
+      const base = '/api/ai';
+      if (action === 'train') {
+        return period === '30' ? `${base}/train-model-30` : `${base}/train-model`;
+      }
+      if (action === 'predict') {
+        return period === '30' ? `${base}/best-sellers-30` : `${base}/best-sellers`;
+      }
+    }
+
+    // Train the selected model
     document.getElementById('trainBtn').addEventListener('click', async () => {
+      const url = getApiRoute('train');
       try {
-        const res = await fetch('/api/ai/train-model');
+        const res = await fetch(url);
         const data = await res.json();
-        document.getElementById('output').innerHTML =
-          `<p><strong>Train Model:</strong> ${data.message}</p>`;
+        outputDiv.innerHTML =
+          `<p><strong>Train Model (${modelSelect.value}-Day):</strong> ${data.message}</p>`;
       } catch (err) {
-        document.getElementById('output').innerHTML =
+        outputDiv.innerHTML =
           `<p style="color:red;">Error training model: ${err.message}</p>`;
       }
     });
 
-    // Get predictions
+    // Get predictions for the selected model
     document.getElementById('predictBtn').addEventListener('click', async () => {
+      const url = getApiRoute('predict');
       try {
-        const res = await fetch('/api/ai/best-sellers');
+        const res = await fetch(url);
         const data = await res.json();
 
         if (!data.data || data.data.length === 0) {
-          document.getElementById('output').innerHTML =
+          outputDiv.innerHTML =
             "<p style='color:red;'>⚠️ No predictions available. Please <strong>train the model first</strong>.</p>";
           return;
         }
 
         let table = `
-          <h2>Top 5 Predicted Best Sellers</h2>
+          <h2>Top 5 Predicted Best Sellers (${modelSelect.value}-Day)</h2>
           <table>
             <tr>
               <th>Rank</th>
@@ -67,9 +95,9 @@
         });
 
         table += "</table>";
-        document.getElementById('output').innerHTML = table;
+        outputDiv.innerHTML = table;
       } catch (err) {
-        document.getElementById('output').innerHTML =
+        outputDiv.innerHTML =
           `<p style="color:red;">Error getting predictions: ${err.message}</p>`;
       }
     });

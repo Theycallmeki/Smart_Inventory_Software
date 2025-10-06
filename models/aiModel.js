@@ -16,11 +16,15 @@ const AiModel = sequelize.define('AiModel', {
       model: Item,
       key: 'id',
     },
-    unique: true, // one model per item
   },
   modelType: {
     type: DataTypes.STRING,
     defaultValue: 'linear-regression',
+  },
+  period: {
+    type: DataTypes.INTEGER, // ✅ 7 or 30 days
+    allowNull: false,
+    defaultValue: 7,
   },
   quantities: {
     type: DataTypes.JSON, // store historical data used for training
@@ -33,9 +37,15 @@ const AiModel = sequelize.define('AiModel', {
 }, {
   tableName: 'ai_models',
   timestamps: false,
+  indexes: [
+    {
+      unique: true,
+      fields: ['itemId', 'period'], // ✅ allow one model per (item, period)
+    },
+  ],
 });
 
-Item.hasOne(AiModel, { foreignKey: 'itemId', onDelete: 'CASCADE' });
+Item.hasMany(AiModel, { foreignKey: 'itemId', onDelete: 'CASCADE' });
 AiModel.belongsTo(Item, { foreignKey: 'itemId' });
 
 module.exports = AiModel;

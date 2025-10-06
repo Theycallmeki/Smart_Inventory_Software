@@ -1,40 +1,47 @@
-// seedDemo3.js
 const sequelize = require('./db');
 const Item = require('./models/item');
 const SalesHistory = require('./models/salesHistory');
 
-async function seedDemo3() {
+async function seedSales() {
   try {
-    await sequelize.sync(); // ✅ no force, keeps existing data
+    await sequelize.sync(); // no force — keeps items intact
 
-    // Create demo3 item (zigzag trend)
-    const demo3 = await Item.create({
-      id: 107,
-      name: 'demo3',
-      quantity: 100,
-      category: 'Fruits',
-      price: 9.99,
-      barcode: '00000107',
-    });
+    const items = await Item.findAll();
+    if (!items.length) {
+      console.log('⚠️ No items found. Please add items first.');
+      return;
+    }
 
-    const demo3Sales = [
-      { date: '2025-09-14', quantitySold: 10 },
-      { date: '2025-09-15', quantitySold: 20 },
-      { date: '2025-09-16', quantitySold: 15 },
-      { date: '2025-09-17', quantitySold: 25 },
-      { date: '2025-09-18', quantitySold: 12 },
-      { date: '2025-09-19', quantitySold: 30 },
-      { date: '2025-09-20', quantitySold: 18 },
-    ].map(s => ({ ...s, itemId: demo3.id }));
+    console.log(`Found ${items.length} items. Seeding sales data...`);
 
-    await SalesHistory.bulkCreate(demo3Sales);
+    const salesData = [];
 
-    console.log('✅ demo3 seeded successfully!');
+    // 📅 Generate 30 days of sales history for each item
+    for (const item of items) {
+      for (let i = 0; i < 30; i++) {
+        const date = new Date();
+        date.setDate(date.getDate() - (30 - i)); // from 30 days ago to today
+
+        // random trend simulation: different per item
+        let baseQty = 10 + item.id * 5;
+        const variation = Math.floor(Math.random() * 6) - 3; // ±3
+        const quantitySold = Math.max(1, baseQty + variation + i); // some growth trend
+
+        salesData.push({
+          itemId: item.id,
+          date,
+          quantitySold, // ✅ fixed key
+        });
+      }
+    }
+
+    await SalesHistory.bulkCreate(salesData);
+    console.log('✅ Seeded 7-day & 30-day sales data successfully!');
     process.exit(0);
   } catch (err) {
-    console.error('❌ Error seeding demo3:', err);
+    console.error('❌ Error seeding sales data:', err);
     process.exit(1);
   }
 }
 
-seedDemo3();
+seedSales();

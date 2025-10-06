@@ -1,22 +1,21 @@
-
-// ai/bestSellerModel.js
+// ai/bestSellerModel30Day.js
 const { Op } = require('sequelize');
 const SalesHistory = require('../models/salesHistory');
 const Item = require('../models/item');
 const AiModel = require('../models/AiModel');
 
 /**
- * Prepare last 7 days of sales
+ * Prepare last 30 days of sales
  */
 async function prepareData(itemId) {
   try {
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
     const sales = await SalesHistory.findAll({
       where: {
         itemId,
-        date: { [Op.gte]: sevenDaysAgo },
+        date: { [Op.gte]: thirtyDaysAgo },
       },
       order: [['date', 'ASC']],
     });
@@ -46,7 +45,7 @@ function linearRegressionPredict(quantities) {
 }
 
 /**
- * Train and save model for one item (7-day)
+ * Train and save model for one item (30-day)
  */
 async function trainAndSaveModel(itemId) {
   const quantities = await prepareData(itemId);
@@ -54,12 +53,12 @@ async function trainAndSaveModel(itemId) {
 
   const modelType = quantities.length < 2 ? 'average' : 'linear-regression';
 
-  // ✅ Save with period = 7
+  // ✅ Save with period = 30
   await AiModel.upsert({
     itemId,
     modelType,
     quantities,
-    period: 7,
+    period: 30,
     updatedAt: new Date(),
   });
 
@@ -67,9 +66,9 @@ async function trainAndSaveModel(itemId) {
 }
 
 /**
- * Predict next quantity using stored model (7-day)
+ * Predict next quantity using stored model (30-day)
  */
-async function predictItem(itemId, period = 7) {
+async function predictItem(itemId, period = 30) {
   const model = await AiModel.findOne({ where: { itemId, period } });
   if (!model) return null;
 
@@ -81,7 +80,7 @@ async function predictItem(itemId, period = 7) {
 }
 
 /**
- * Train all items (7-day)
+ * Train all items (30-day)
  */
 async function trainModel() {
   try {
@@ -89,15 +88,15 @@ async function trainModel() {
     for (let item of items) {
       await trainAndSaveModel(item.id);
     }
-    return '✅ All 7-day models trained and saved to database!';
+    return '✅ All 30-day models trained and saved to database!';
   } catch (err) {
     console.error('trainModel error:', err);
-    throw new Error('Failed to train 7-day model');
+    throw new Error('Failed to train 30-day model');
   }
 }
 
 /**
- * Recommend top predicted best sellers (7-day)
+ * Recommend top predicted best sellers (30-day)
  */
 async function recommendBestSellers(limit = 5) {
   try {
@@ -105,7 +104,7 @@ async function recommendBestSellers(limit = 5) {
     const predictions = [];
 
     for (let item of items) {
-      const nextQty = await predictItem(item.id, 7);
+      const nextQty = await predictItem(item.id, 30);
       if (nextQty !== null && !isNaN(nextQty)) {
         predictions.push({
           itemId: item.id,
