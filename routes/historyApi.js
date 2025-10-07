@@ -174,7 +174,7 @@ router.post('/confirm-cash', async (req, res) => {
 
     delete cashCodes[code]; // remove code after use
 
-    res.json({ message: 'Cash payment confirmed and recorded!' });
+    res.json({ message: 'Cash payment confirmed and recorded at burat ni jehu!' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
