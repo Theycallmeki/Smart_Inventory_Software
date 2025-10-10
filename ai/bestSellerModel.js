@@ -3,7 +3,7 @@
 const { Op } = require('sequelize');
 const SalesHistory = require('../models/salesHistory');
 const Item = require('../models/item');
-const AiModel = require('../models/AiModel');
+const AiModel = require('../models/aiModel');
 
 /**
  * Prepare last 7 days of sales
