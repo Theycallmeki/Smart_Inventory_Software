@@ -1,80 +1,177 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>AI Best Seller Predictor</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    button, select { margin: 5px; padding: 10px 15px; cursor: pointer; }
-    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-    th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-    th { background: #f4f4f4; }
-    .top1 { background: #d4edda; font-weight: bold; } /* highlight #1 */
-  </style>
-</head>
-<body>
-  <h1>AI Best Seller Predictor</h1>
-
-  <label for="modelSelect"><strong>Select Model Period:</strong></label>
-  <select id="modelSelect">
-    <option value="7" selected>7-Day Model</option>
-    <option value="30">30-Day Model</option>
-  </select>
-
-  <button id="trainBtn">Train Model</button>
-  <button id="predictBtn">Get Best Sellers</button>
-
-  <div id="output"></div>
-
-  <script>
-    const modelSelect = document.getElementById('modelSelect');
-    const outputDiv = document.getElementById('output');
-
-    // Clear output whenever model changes
-    modelSelect.addEventListener('change', () => {
-      outputDiv.innerHTML = '';
-    });
-
-    // Helper to get API route based on selected model
-    function getApiRoute(action) {
-      const period = modelSelect.value;
-      const base = '/api/ai';
-      if (action === 'train') {
-        return period === '30' ? `${base}/train-model-30` : `${base}/train-model`;
+  <head>
+    <meta charset="UTF-8" />
+    <title>Recommendation</title>
+    <link rel="stylesheet" href="item.css" />
+    <style>
+      /* Page-specific styling for Cash Generator */
+      .cash-container {
+        max-width: 500px;
+        margin: 120px auto 0; /* space for fixed header */
+        background: white;
+        padding: 25px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
       }
-      if (action === 'predict') {
-        return period === '30' ? `${base}/best-sellers-30` : `${base}/best-sellers`;
+
+      .cash-container h1 {
+        text-align: center;
+        color: #007bff; /* ✅ Changed to blue */
+        margin-bottom: 20px;
       }
-    }
 
-    // Train the selected model
-    document.getElementById('trainBtn').addEventListener('click', async () => {
-      const url = getApiRoute('train');
-      try {
-        const res = await fetch(url);
-        const data = await res.json();
-        outputDiv.innerHTML =
-          `<p><strong>Train Model (${modelSelect.value}-Day):</strong> ${data.message}</p>`;
-      } catch (err) {
-        outputDiv.innerHTML =
-          `<p style="color:red;">Error training model: ${err.message}</p>`;
+      .cash-container p {
+        text-align: center;
+        margin-bottom: 20px;
+        color: #555;
       }
-    });
 
-    // Get predictions for the selected model
-    document.getElementById('predictBtn').addEventListener('click', async () => {
-      const url = getApiRoute('predict');
-      try {
-        const res = await fetch(url);
-        const data = await res.json();
+      /* Default button style (blue) */
+      button {
+        width: 100%;
+        margin-top: 10px;
+        padding: 12px;
+        font-size: 1rem;
+        border-radius: 5px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-weight: bold;
+      }
 
-        if (!data.data || data.data.length === 0) {
-          outputDiv.innerHTML =
-            "<p style='color:red;'>⚠️ No predictions available. Please <strong>train the model first</strong>.</p>";
-          return;
+      button:hover {
+        background-color: #0056b3;
+      }
+
+      /* ✅ Green buttons for Train & Predict */
+      #trainBtn,
+      #predictBtn {
+        background-color: #28a745;
+      }
+
+      #trainBtn:hover,
+      #predictBtn:hover {
+        background-color: #1e7e34;
+      }
+
+      .result {
+        background: #e9ffe9;
+        border: 1px solid #b2ffb2;
+        padding: 10px;
+        margin-top: 15px;
+        border-radius: 5px;
+        display: none;
+      }
+
+      /* Basic table styling for prediction results */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+
+      table th,
+      table td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: center;
+      }
+
+      table th {
+        background-color: #f2f2f2;
+      }
+
+      .top1 {
+        background-color: #d4edda;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- ✅ Same Header as Item Management -->
+    <header class="fixed-header">
+      <a href="/">Home</a>
+      <a href="/item">Items</a>
+      <a href="/admin">Admin Panel</a>
+      <a href="/sales-history">Sales History</a>
+      <a href="/prediction">Prediction</a>
+      <a href="/pos">Pos Mode</a>
+      <a href="/cash-generate">Transaction Code</a>
+      <a href="/best">Ai Recommendation</a>
+    </header>
+
+    <!-- ✅ Same Content Wrapper Class -->
+    <div class="cash-container">
+      <h1>AI Best Seller Predictor</h1>
+
+      <label for="modelSelect"><strong>Select Model Period:</strong></label>
+      <select id="modelSelect">
+        <option value="7" selected>7-Day Model</option>
+        <option value="30">30-Day Model</option>
+      </select>
+
+      <button id="trainBtn">Train Model</button>
+      <button id="predictBtn">Get Best Sellers</button>
+
+      <div id="output"></div>
+    </div>
+
+    <script>
+      const modelSelect = document.getElementById("modelSelect");
+      const outputDiv = document.getElementById("output");
+
+      // Clear output whenever model changes
+      modelSelect.addEventListener("change", () => {
+        outputDiv.innerHTML = "";
+      });
+
+      // Helper to get API route based on selected model
+      function getApiRoute(action) {
+        const period = modelSelect.value;
+        const base = "/api/ai";
+        if (action === "train") {
+          return period === "30"
+            ? `${base}/train-model-30`
+            : `${base}/train-model`;
         }
+        if (action === "predict") {
+          return period === "30"
+            ? `${base}/best-sellers-30`
+            : `${base}/best-sellers`;
+        }
+      }
 
-        let table = `
+      // Train the selected model
+      document.getElementById("trainBtn").addEventListener("click", async () => {
+        const url = getApiRoute("train");
+        try {
+          const res = await fetch(url);
+          const data = await res.json();
+          outputDiv.innerHTML = `<p><strong>Train Model (${modelSelect.value}-Day):</strong> ${data.message}</p>`;
+        } catch (err) {
+          outputDiv.innerHTML = `<p style="color:red;">Error training model: ${err.message}</p>`;
+        }
+      });
+
+      // Get predictions for the selected model
+      document
+        .getElementById("predictBtn")
+        .addEventListener("click", async () => {
+          const url = getApiRoute("predict");
+          try {
+            const res = await fetch(url);
+            const data = await res.json();
+
+            if (!data.data || data.data.length === 0) {
+              outputDiv.innerHTML =
+                "<p style='color:red;'>⚠️ No predictions available. Please <strong>train the model first</strong>.</p>";
+              return;
+            }
+
+            let table = `
           <h2>Top 5 Predicted Best Sellers (${modelSelect.value}-Day)</h2>
           <table>
             <tr>
@@ -84,23 +181,22 @@
             </tr>
         `;
 
-        data.data.forEach((p, i) => {
-          table += `
-            <tr class="${i === 0 ? 'top1' : ''}">
+            data.data.forEach((p, i) => {
+              table += `
+            <tr class="${i === 0 ? "top1" : ""}">
               <td>${i + 1}</td>
               <td>${p.item}</td>
               <td>${p.predictedNext}</td>
             </tr>
           `;
-        });
+            });
 
-        table += "</table>";
-        outputDiv.innerHTML = table;
-      } catch (err) {
-        outputDiv.innerHTML =
-          `<p style="color:red;">Error getting predictions: ${err.message}</p>`;
-      }
-    });
-  </script>
-</body>
+            table += "</table>";
+            outputDiv.innerHTML = table;
+          } catch (err) {
+            outputDiv.innerHTML = `<p style="color:red;">Error getting predictions: ${err.message}</p>`;
+          }
+        });
+    </script>
+  </body>
 </html>

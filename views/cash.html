@@ -2,25 +2,30 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Admin Cash Code Generator</title>
+    <title>Cash Code Generator</title>
+    <link rel="stylesheet" href="item.css" />
     <style>
-      body {
-        font-family: Arial, sans-serif;
-        background: #f5f6fa;
-        padding: 40px;
-      }
-      .container {
+      /* Page-specific styling for Cash Generator */
+      .cash-container {
         max-width: 500px;
-        margin: auto;
+        margin: 120px auto 0; /* space for fixed header */
         background: white;
         padding: 25px;
         border-radius: 10px;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
       }
-      h2 {
+
+      .cash-container h2 {
         text-align: center;
         color: #333;
       }
+
+      .cash-container p {
+        text-align: center;
+        margin-bottom: 20px;
+        color: #555;
+      }
+
       button {
         width: 100%;
         margin-top: 10px;
@@ -33,9 +38,11 @@
         cursor: pointer;
         font-weight: bold;
       }
+
       button:hover {
         background-color: #0056b3;
       }
+
       .result {
         background: #e9ffe9;
         border: 1px solid #b2ffb2;
@@ -46,12 +53,29 @@
       }
     </style>
   </head>
+
   <body>
-    <div class="container">
-      <h2>Admin Cash Code Generator</h2>
-      <p>Click the button below to generate a cash code using the latest cart sent from the frontend.</p>
-      <button id="generateBtn">Generate Cash Code</button>
-      <div id="result" class="result"></div>
+    <!-- ✅ Same Header as Item Management -->
+    <header class="fixed-header">
+      <a href="/">Home</a>
+      <a href="/item">Items</a>
+      <a href="/admin">Admin Panel</a>
+      <a href="/sales-history">Sales History</a>
+      <a href="/prediction">Prediction</a>
+      <a href="/pos">Pos Mode</a>
+      <a href="/cash-generate">Transaction Code</a>
+      <a href="/best">Ai Recommendation</a>
+
+    </header>
+
+    <!-- ✅ Same Content Wrapper Class -->
+    <div class="page-content">
+      <div class="cash-container">
+        <h2>Admin Cash Code Generator</h2>
+        <p>Click the button below to generate a cash code using the latest cart sent from the frontend.</p>
+        <button id="generateBtn">Generate Cash Code</button>
+        <div id="result" class="result"></div>
+      </div>
     </div>
 
     <script>
