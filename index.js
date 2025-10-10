@@ -14,7 +14,7 @@ const PORT = process.env.PORT || 3005;
 app.use(cors({
   origin: [
     'http://localhost:3000',                   // Local dev
-    'https://pi-mart-client-goaz.vercel.app/'  // Deployed frontend
+    'https://pi-mart-client.vercel.app/'  // Deployed frontend
   ],
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
