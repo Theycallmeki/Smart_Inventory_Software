@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Admin Cash Code Generator</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #f5f6fa;
+        padding: 40px;
+      }
+      .container {
+        max-width: 500px;
+        margin: auto;
+        background: white;
+        padding: 25px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      h2 {
+        text-align: center;
+        color: #333;
+      }
+      button {
+        width: 100%;
+        margin-top: 10px;
+        padding: 12px;
+        font-size: 1rem;
+        border-radius: 5px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-weight: bold;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+      .result {
+        background: #e9ffe9;
+        border: 1px solid #b2ffb2;
+        padding: 10px;
+        margin-top: 15px;
+        border-radius: 5px;
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>Admin Cash Code Generator</h2>
+      <p>Click the button below to generate a cash code using the latest cart sent from the frontend.</p>
+      <button id="generateBtn">Generate Cash Code</button>
+      <div id="result" class="result"></div>
+    </div>
+
+    <script>
+      document.getElementById("generateBtn").addEventListener("click", async () => {
+        try {
+          const res = await fetch("/api/sales-history/admin/generate-cash-code", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+          });
+
+          const data = await res.json();
+          if (res.ok) {
+            const resultDiv = document.getElementById("result");
+            resultDiv.style.display = "block";
+            resultDiv.innerHTML =
+              "<strong>Generated Code:</strong> " +
+              data.code +
+              "<br><small>Share this code with the customer for cash payment confirmation.</small>";
+          } else {
+            alert(data.error || "Failed to generate code.");
+          }
+        } catch (err) {
+          alert("Server error. Please try again.");
+          console.error(err);
+        }
+      });
+    </script>
+  </body>
+</html>

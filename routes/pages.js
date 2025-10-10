@@ -11,5 +11,6 @@ router.get('/prediction', ensureAuthenticated, (req, res) => res.sendFile(path.j
 router.get('/auth', (req, res) => res.sendFile(path.join(__dirname, '../views/auth.html')));
 router.get('/pos', ensureAuthenticated, (req, res) => res.sendFile(path.join(__dirname, '../views/pos.html')));
 router.get('/best', ensureAuthenticated, (req, res) => res.sendFile(path.join(__dirname, '../views/best-seller.html')));
+router.get('/cash-generate', ensureAuthenticated, (req, res) => res.sendFile(path.join(__dirname, '../views/cash.html')));
 
 module.exports = router;
