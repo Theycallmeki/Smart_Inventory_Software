@@ -68,8 +68,8 @@ router.post('/create-checkout-session', async (req, res) => {
           attributes: {
             payment_method_types: ['gcash'],
             line_items,
-            cancel_url: 'http://localhost:3000/cancel',
-            success_url: 'http://localhost:3000/success',
+            cancel_url: 'https://pi-mart-client.vercel.app/cancel',
+            success_url: 'https://pi-mart-client.vercel.app/success',
             metadata: { cart: JSON.stringify(cart) },
           },
         },
